@@ -5,8 +5,9 @@ Personal visual reference library — a collection of deep-dive HTML pages that 
 ## Live pages
 
 - [**Notion**](./notion.html) — Warm neutrals, ultra-thin borders, multi-layer shadows with sub-0.05 opacity. Paper, not glass.
+- [**Linear**](./linear.html) — Dark-mode-native near-black canvas. Inter Variable at signature weight 510. Indigo-violet as the single chromatic accent. Precision engineering, not paper.
 
-More brands planned (Linear, Stripe, Apple, Vercel, Airbnb, Figma, Spotify, Superhuman, Tesla…).
+More brands planned (Stripe, Apple, Vercel, Airbnb, Figma, Spotify, Superhuman, Tesla…).
 
 ## Structure
 

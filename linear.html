@@ -1,0 +1,2223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Linear — Full Design System Board</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- Inter loaded with variable weight range so we can use Linear's signature 510 weight.
+     Berkeley Mono is Linear's private monospace; we fall back to JetBrains Mono. -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="_shared/board.css">
+
+<style>
+  /* =========================================================
+     LINEAR FAITHFUL STYLES
+
+     Dark-mode native: #08090a marketing canvas where content emerges
+     from darkness. White/silver text on dark, with brand indigo-violet
+     as the sole chromatic accent. Borders are semi-transparent white
+     at 5-8% opacity. Shadows use both drop and inset highlights.
+  ========================================================= */
+  :root {
+    /* Text — luminous silver family on dark */
+    --color-text-primary: #f7f8f8;
+    --color-text-secondary: #d0d6e0;
+    --color-text-muted: #8a8f98;
+    --color-text-quaternary: #62666d;
+
+    /* Surface — four depth levels of near-black */
+    --color-bg-canvas: #08090a;
+    --color-bg-alt: #0f1011;
+    --color-bg-surface-2: #191a1b;
+    --color-bg-surface-3: #28282c;
+    --color-bg-inverse: #f7f8f8;
+
+    /* Brand — the single chromatic accent: indigo-violet */
+    --color-accent: #5e6ad2;
+    --color-accent-deep: #4c57b8;
+    --color-accent-pressed: #4c57b8;
+
+    --color-link: #7170ff;
+    --color-link-inverse: #5e6ad2;
+    --color-focus: #7170ff;
+    --color-badge-bg: rgba(113,112,255,0.12);
+    --color-badge-text: #7170ff;
+
+    /* Feature accent slots — Linear's palette is almost achromatic,
+       so most slots take shades of the brand indigo or status green. */
+    --teal: #7170ff;     /* accent violet (links, active) */
+    --green: #27a644;    /* in-progress */
+    --orange: #f76808;   /* rarely used — attention */
+    --pink: #828fff;     /* accent hover */
+    --purple: #5e6ad2;   /* brand indigo */
+    --brown: #7a7fad;    /* security lavender */
+
+    /* Border — Linear's signature whisper: semi-transparent white at 5-8% */
+    --border-subtle: 1px solid rgba(255,255,255,0.06);
+    --border-standard: 1px solid rgba(255,255,255,0.08);
+    --border-solid: 1px solid #23252a;
+
+    /* Elevation — dark surfaces use inset white highlight + dark drop shadow.
+       Soft: barely there, for resting cards. Deep: for lifted panels/modals. */
+    --elevation-soft:
+      inset 0 1px 0 rgba(255,255,255,0.03),
+      0 1px 2px rgba(0,0,0,0.35),
+      0 4px 12px rgba(0,0,0,0.25);
+    --elevation-deep:
+      inset 0 1px 0 rgba(255,255,255,0.04),
+      0 2px 4px rgba(0,0,0,0.4),
+      0 8px 24px rgba(0,0,0,0.35),
+      0 20px 48px rgba(0,0,0,0.3);
+
+    /* Brand-specific overrides of shared board.css defaults.
+       Success feedback: Linear's own "in progress" green tinted for dark.
+       Illus placeholder: sits on brand-indigo gradient bed. */
+    --color-success-bg: rgba(39,166,68,0.14);
+    --color-success-border: rgba(39,166,68,0.42);
+    --color-success-text: #6eca86;
+
+    --color-illus-placeholder-bg: rgba(8,9,10,0.58);
+    --color-illus-placeholder-border: rgba(113,112,255,0.32);
+    --color-illus-placeholder-text: #a8acd1;
+    --color-illus-placeholder-strong: #e5e6ff;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', 'SF Pro Display', -apple-system, system-ui, sans-serif;
+    /* Linear loads Inter Variable with "cv01" + "ss03" globally for a cleaner,
+       more geometric character: cv01 gives alternate single-storey 'a',
+       ss03 adjusts specific letterforms. Contrast with Notion's "ss01","cv11". */
+    font-feature-settings: "cv01", "ss03";
+    background: var(--color-bg-canvas);
+    color: var(--color-text-primary);
+    line-height: 1.5;
+    /* Linear's signature weight 510 — between regular (400) and medium (500).
+       Variable font weight axis makes this possible. */
+    font-weight: 400;
+  }
+
+  /* Layout */
+  .wrap {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+  }
+  .toc {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    padding: 28px 20px;
+    border-right: var(--border-subtle);
+    background: var(--color-bg-alt);
+    overflow-y: auto;
+    font-size: 13px;
+  }
+  .toc-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.125px;
+    color: var(--color-text-secondary);
+    margin-bottom: 16px;
+  }
+  /* TOC group label — mono, subtle but WCAG-AA legible. secondary text on
+     alt bg gives ~5.5:1 contrast. 11px is the smallest allowed. */
+  .toc-group-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--color-text-secondary);
+    margin: 20px 10px 6px;
+  }
+  .toc-group-label:first-of-type { margin-top: 8px; }
+  .toc a {
+    display: block;
+    padding: 6px 10px;
+    border-radius: 5px;
+    color: var(--color-text-primary);
+    text-decoration: none;
+    font-weight: 500;
+    margin-bottom: 2px;
+  }
+  .toc a:hover { background: rgba(0,0,0,0.04); }
+  .toc a .num {
+    color: var(--color-text-muted);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    margin-right: 8px;
+  }
+  .main { padding: 0; }
+
+  /* Section */
+  .section { padding: 96px 80px; border-bottom: var(--border-subtle); }
+  .section.alt { background: var(--color-bg-alt); }
+  .section h2 {
+    font-size: 48px;
+    font-weight: 700;
+    letter-spacing: -1.5px;
+    line-height: 1.0;
+    margin: 0 0 16px;
+  }
+  .section .lead {
+    font-size: 20px;
+    font-weight: 600;
+    line-height: 1.4;
+    letter-spacing: -0.125px;
+    color: var(--color-text-secondary);
+    max-width: 760px;
+    margin: 0 0 48px;
+  }
+  .section-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-text-muted);
+    letter-spacing: 0.125px;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+  }
+
+  /* Hero */
+  .hero {
+    padding: 120px 80px 100px;
+    max-width: 1200px;
+    margin: 0 auto;
+    position: relative;
+  }
+  .hero .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 10px;
+    background: var(--color-badge-bg);
+    color: var(--color-badge-text);
+    border-radius: 9999px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.125px;
+    margin-bottom: 28px;
+  }
+  .hero h1 {
+    font-size: 64px;
+    font-weight: 700;
+    line-height: 1.0;
+    letter-spacing: -2.125px;
+    margin: 0 0 24px;
+    max-width: 880px;
+  }
+  .hero .sub {
+    font-size: 20px;
+    font-weight: 600;
+    line-height: 1.4;
+    letter-spacing: -0.125px;
+    color: var(--color-text-secondary);
+    max-width: 660px;
+  }
+  .hero-meta {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 32px;
+    margin-top: 56px;
+    padding-top: 32px;
+    border-top: var(--border-subtle);
+  }
+  .hero-meta-item .label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-text-muted);
+    letter-spacing: 0.125px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .hero-meta-item .value {
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -0.625px;
+    line-height: 1.23;
+  }
+
+  /* Key characteristics */
+  .bullet-list { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; max-width: 1000px; }
+  .bullet {
+    display: flex;
+    gap: 14px;
+    padding: 18px 20px;
+    background: var(--color-bg-canvas);
+    border: var(--border-subtle);
+    border-radius: 12px;
+    font-size: 15px;
+    line-height: 1.5;
+  }
+  .bullet-num {
+    flex-shrink: 0;
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    background: var(--color-badge-bg);
+    color: var(--color-badge-text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 600;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* Color grid */
+  .color-category { margin-bottom: 56px; }
+  .color-category h3 {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.25px;
+    margin: 0 0 20px;
+  }
+  .color-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 14px;
+  }
+  .color-card {
+    background: var(--color-bg-canvas);
+    border: var(--border-subtle);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .color-swatch { height: 96px; position: relative; }
+  .color-meta { padding: 14px 16px; }
+  .color-name { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
+  .color-hex {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--color-text-secondary);
+  }
+  .color-role {
+    font-size: 12px;
+    color: var(--color-text-secondary);
+    margin-top: 6px;
+    line-height: 1.4;
+  }
+
+  /* Typography table */
+  .type-scale { display: flex; flex-direction: column; gap: 20px; }
+  .type-row {
+    display: grid;
+    grid-template-columns: 160px 1fr 320px;
+    gap: 24px;
+    align-items: center;
+    padding: 20px 0;
+    border-bottom: var(--border-subtle);
+  }
+  .type-meta { }
+  .type-role { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+  .type-usage { font-size: 12px; color: var(--color-text-secondary); line-height: 1.4; }
+  .type-sample { overflow: hidden; }
+  .type-tokens {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--color-text-secondary);
+  }
+  .type-tokens .k { color: var(--color-text-secondary); opacity: 0.75; }
+  .type-tokens .v { color: var(--color-text-primary); }
+
+  /* Buttons */
+  .btn-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 24px;
+  }
+  .btn-card {
+    background: var(--color-bg-canvas);
+    border: var(--border-subtle);
+    border-radius: 12px;
+    padding: 28px 24px;
+  }
+  .btn-card h4 {
+    font-size: 16px;
+    font-weight: 700;
+    margin: 0 0 4px;
+  }
+  .btn-card .desc {
+    font-size: 13px;
+    color: var(--color-text-secondary);
+    margin-bottom: 20px;
+    line-height: 1.5;
+  }
+  .btn-stage {
+    padding: 32px 16px;
+    background: var(--color-bg-alt);
+    border-radius: 8px;
+    margin-bottom: 16px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  .btn-tokens {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+  }
+
+  /* Notion real buttons */
+  /* Linear buttons — subtle surfaces that reveal on hover rather than
+     commanding attention at rest. Inset highlight adds depth on dark. */
+  .brand-btn-primary {
+    background: var(--color-accent);
+    color: white;
+    padding: 7px 14px;
+    border-radius: 6px;
+    border: 1px solid rgba(255,255,255,0.08);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
+    font-size: 14px;
+    font-weight: 510;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+    font-family: inherit;
+    letter-spacing: -0.01em;
+  }
+  .brand-btn-primary:hover { background: #6b77e0; }
+  .brand-btn-primary:active { transform: translateY(1px); background: var(--color-accent-pressed); }
+  .brand-btn-secondary {
+    background: rgba(255,255,255,0.05);
+    color: var(--color-text-primary);
+    padding: 7px 14px;
+    border-radius: 6px;
+    border: 1px solid rgba(255,255,255,0.08);
+    font-size: 14px;
+    font-weight: 510;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+    font-family: inherit;
+    letter-spacing: -0.01em;
+  }
+  .brand-btn-secondary:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.12); }
+  .brand-btn-secondary:active { background: rgba(255,255,255,0.03); }
+  .brand-btn-ghost {
+    background: transparent;
+    color: var(--color-text-secondary);
+    padding: 7px 14px;
+    border: none;
+    font-size: 14px;
+    font-weight: 510;
+    cursor: pointer;
+    font-family: inherit;
+    transition: color 0.15s;
+  }
+  .brand-btn-ghost:hover { color: var(--color-text-primary); }
+  .brand-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 9px;
+    background: var(--color-badge-bg);
+    color: var(--color-badge-text);
+    border: 1px solid rgba(113,112,255,0.22);
+    border-radius: 9999px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.125px;
+  }
+
+  /* Cards demo */
+  .demo-card {
+    background: var(--color-bg-canvas);
+    border: var(--border-subtle);
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: var(--elevation-soft);
+    transition: box-shadow 0.25s ease, transform 0.25s ease;
+  }
+  .demo-card:hover {
+    box-shadow: var(--elevation-deep);
+    transform: translateY(-1px);
+  }
+  .demo-card.featured { border-radius: 16px; padding: 32px; }
+  .demo-card h4 {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.25px;
+    margin: 0 0 8px;
+  }
+  .demo-card .body {
+    font-size: 16px;
+    line-height: 1.5;
+    color: var(--color-text-secondary);
+  }
+
+  /* Font note — muted disclaimer card for the typography section */
+  .font-note {
+    background: var(--color-bg-alt);
+    border: var(--border-subtle);
+    border-left: 3px solid var(--color-accent);
+    border-radius: 8px;
+    padding: 18px 22px;
+    margin: 0 0 32px;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 18px;
+    align-items: start;
+  }
+  .font-note-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--color-text-secondary);
+    padding-top: 2px;
+    white-space: nowrap;
+  }
+  .font-note-body {
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--color-text-secondary);
+    margin: 0;
+  }
+  .font-note-body strong { color: var(--color-text-primary); font-weight: 600; }
+  .font-note-body code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    background: var(--color-bg-canvas);
+    border: var(--border-subtle);
+    padding: 1px 6px;
+    border-radius: 4px;
+    color: var(--color-text-primary);
+  }
+
+  /* TOC active / color-card interactions / copy-btn / board-toast / supplement
+     section styles all live in _shared/board.css. Only brand-specific layout
+     stays in this file. */
+
+  /* Image treatment grid */
+  .image-treatment-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 20px;
+    max-width: 1100px;
+  }
+  .image-demo-card {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .image-demo-visual {
+    border: var(--border-subtle);
+    border-radius: 12px;
+    height: 200px;
+    position: relative;
+    overflow: hidden;
+  }
+  .image-demo-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin-bottom: 2px;
+  }
+  .image-demo-spec {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--color-text-secondary);
+    margin-bottom: 6px;
+    line-height: 1.5;
+  }
+  .image-demo-spec code {
+    background: var(--color-bg-alt);
+    padding: 1px 5px;
+    border-radius: 3px;
+    color: var(--color-text-primary);
+  }
+  .image-demo-role {
+    font-size: 12.5px;
+    color: var(--color-text-secondary);
+    line-height: 1.45;
+  }
+
+  /* illus-placeholder / template-scope-note / rule-pair family are
+     in _shared/board.css — see token contract there. */
+
+  /* Inputs demo — Linear's dark-mode native input style */
+  .brand-input {
+    width: 100%;
+    padding: 8px 12px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--color-text-primary);
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .brand-input::placeholder { color: var(--color-text-muted); }
+  .brand-input:hover { border-color: rgba(255,255,255,0.12); }
+  .brand-input:focus {
+    border-color: var(--color-focus);
+    box-shadow: 0 0 0 2px rgba(9,127,232,0.2);
+  }
+  .brand-input::placeholder { color: var(--color-text-muted); }
+
+  /* Nav demo */
+  .nav-demo {
+    background: rgba(15,16,17,0.72);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 10px;
+    padding: 12px 18px;
+    display: flex;
+    align-items: center;
+    gap: 28px;
+  }
+  .nav-brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 510;
+    font-size: 15px;
+    letter-spacing: -0.01em;
+  }
+  .nav-icon {
+    width: 22px; height: 22px;
+    background: linear-gradient(135deg, var(--color-accent) 0%, #7170ff 100%);
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 12px;
+    font-weight: 600;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.18);
+  }
+  .nav-links {
+    display: flex;
+    gap: 22px;
+    flex: 1;
+  }
+  .nav-links a {
+    font-size: 14px;
+    font-weight: 510;
+    color: var(--color-text-secondary);
+    text-decoration: none;
+    transition: color 0.15s;
+  }
+  .nav-links a:hover { color: var(--color-text-primary); }
+
+  /* Spacing scale */
+  .spacing-scale { display: flex; flex-direction: column; gap: 14px; }
+  .spacing-row { display: grid; grid-template-columns: 80px 1fr 120px; align-items: center; gap: 16px; }
+  /* Spacing bars are structural data — rendered in inverse-bg, not accent color.
+     Accent is reserved for CTAs/links/focus; using it as a scale indicator
+     dilutes its signal. */
+  .spacing-bar { background: var(--color-bg-inverse); height: 16px; border-radius: 2px; }
+  .spacing-label { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--color-text-secondary); }
+
+  /* Radius scale */
+  .radius-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 16px;
+  }
+  .radius-card {
+    background: white;
+    border: var(--border-subtle);
+    padding: 16px;
+    text-align: center;
+  }
+  .radius-box {
+    height: 80px;
+    /* Radius demo uses neutral warm tones — never accent/brand color.
+       The shape is the data; color should not compete with it. */
+    background: linear-gradient(135deg, var(--color-bg-alt), #ebe7e0);
+    margin-bottom: 12px;
+  }
+  .radius-name { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+  .radius-value { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--color-text-secondary); }
+
+  /* Elevation */
+  .elevation-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 32px;
+  }
+  .elevation-sample {
+    background: var(--color-bg-surface-2);
+    border-radius: 10px;
+    padding: 28px 24px;
+    text-align: center;
+    transition: transform 0.25s ease;
+  }
+  .elevation-sample:hover { transform: translateY(-2px); }
+  .elevation-sample.l0 { background: transparent; border: none; }
+  .elevation-sample.l1 { border: var(--border-subtle); }
+  .elevation-sample.l2 { border: var(--border-subtle); box-shadow: var(--elevation-soft); }
+  .elevation-sample.l3 { border: var(--border-subtle); box-shadow: var(--elevation-deep); }
+  .elevation-sample.l4 { border: 2px solid var(--color-focus); box-shadow: 0 0 0 3px rgba(113,112,255,0.18); }
+  .elevation-level { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--color-text-secondary); margin-bottom: 10px; letter-spacing: 0.125px; }
+  .elevation-name { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+  .elevation-use { font-size: 12px; color: var(--color-text-secondary); line-height: 1.4; }
+
+  /* Breakpoints */
+  .bp-table {
+    background: white;
+    border: var(--border-subtle);
+    border-radius: 12px;
+    overflow: hidden;
+    font-size: 14px;
+  }
+  .bp-row {
+    display: grid;
+    grid-template-columns: 160px 160px 1fr;
+    padding: 14px 20px;
+    border-bottom: var(--border-subtle);
+    align-items: center;
+  }
+  .bp-row:last-child { border-bottom: none; }
+  .bp-row.head { background: var(--color-bg-alt); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.125px; color: var(--color-text-secondary); }
+  .bp-name { font-weight: 600; }
+  .bp-width { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--color-text-secondary); }
+  .bp-notes { color: var(--color-text-secondary); font-size: 14px; }
+
+  /* States demo */
+  .states-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 14px;
+  }
+  .state-card {
+    background: white;
+    border: var(--border-subtle);
+    border-radius: 12px;
+    padding: 20px 16px;
+    text-align: center;
+  }
+  .state-card .btn-mock {
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    display: inline-block;
+  }
+  .state-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin-bottom: 4px;
+  }
+  .state-desc { font-size: 11px; color: var(--color-text-secondary); font-family: 'JetBrains Mono', monospace; }
+
+  /* Contrast */
+  .contrast-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 14px;
+  }
+  .contrast-card {
+    background: white;
+    border: var(--border-subtle);
+    border-radius: 12px;
+    padding: 20px;
+  }
+  .contrast-ratio {
+    font-size: 32px;
+    font-weight: 700;
+    letter-spacing: -0.625px;
+    margin-bottom: 6px;
+  }
+  .contrast-label { font-size: 12px; font-weight: 600; color: var(--color-text-secondary); margin-bottom: 10px; letter-spacing: 0.125px; text-transform: uppercase; }
+  .contrast-pair {
+    padding: 8px 10px;
+    border-radius: 6px;
+    font-size: 13px;
+    margin-bottom: 8px;
+  }
+  .wcag-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 9999px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.125px;
+  }
+
+  /* Metric / Trust */
+  .metric-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 20px;
+  }
+  .metric-card {
+    background: white;
+    border: var(--border-subtle);
+    border-radius: 12px;
+    padding: 28px 24px;
+  }
+  .metric-num {
+    font-size: 40px;
+    font-weight: 700;
+    letter-spacing: normal;
+    line-height: 1.0;
+    margin-bottom: 8px;
+  }
+  .metric-desc {
+    font-size: 14px;
+    color: var(--color-text-secondary);
+    line-height: 1.43;
+  }
+
+  /* Prompt cards */
+  .prompt-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+  .prompt-card {
+    background: var(--color-bg-inverse);
+    color: #ededed;
+    border-radius: 12px;
+    padding: 20px 24px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    line-height: 1.65;
+  }
+  .prompt-card .tag {
+    display: inline-block;
+    padding: 2px 8px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 9999px;
+    font-size: 11px;
+    color: var(--color-text-muted);
+    margin-bottom: 12px;
+    font-weight: 600;
+    letter-spacing: 0.125px;
+    text-transform: uppercase;
+  }
+
+  /* Iteration list */
+  .iter-list { counter-reset: step; display: flex; flex-direction: column; gap: 12px; max-width: 900px; }
+  .iter-item {
+    display: flex;
+    gap: 16px;
+    padding: 18px 22px;
+    background: white;
+    border: var(--border-subtle);
+    border-radius: 12px;
+    counter-increment: step;
+  }
+  .iter-item::before {
+    content: counter(step, decimal-leading-zero);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-accent);
+    flex-shrink: 0;
+  }
+  .iter-text { font-size: 15px; line-height: 1.5; }
+
+  /* Header bar */
+  .top-bar {
+    padding: 16px 80px;
+    background: var(--color-bg-canvas);
+    border-bottom: var(--border-subtle);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 13px;
+  }
+  .top-bar .breadcrumb { color: var(--color-text-secondary); }
+  .top-bar .current { color: var(--color-text-primary); font-weight: 600; }
+  .top-bar .spacer { flex: 1; }
+
+  /* Tablet (768-900) — grids collapse gracefully before narrow-mobile. */
+  @media (max-width: 900px) {
+    .image-treatment-grid { grid-template-columns: 1fr 1fr; }
+    .states-grid { grid-template-columns: repeat(3, 1fr); }
+    .rule-pair { grid-template-columns: 1fr; }
+  }
+  /* Narrow tablet / large mobile */
+  @media (max-width: 768px) {
+    .wrap { grid-template-columns: 1fr; }
+    .toc { position: relative; height: auto; }
+    .hero, .section { padding-left: 24px; padding-right: 24px; padding-top: 48px; padding-bottom: 48px; }
+    .hero h1 { font-size: 40px; letter-spacing: -1.2px; }
+    .section h2 { font-size: 32px; letter-spacing: -0.8px; }
+    .type-row { grid-template-columns: 1fr; }
+    .bp-row { grid-template-columns: 1fr; gap: 4px; }
+    .states-grid { grid-template-columns: 1fr 1fr; }
+    .hero-meta { grid-template-columns: 1fr; }
+    .bullet-list { grid-template-columns: 1fr; }
+    .image-treatment-grid { grid-template-columns: 1fr 1fr; }
+    .template-scope-note { flex-direction: column; gap: 6px; }
+  }
+  @media (max-width: 480px) {
+    .hero h1 { font-size: 26px; letter-spacing: -0.5px; }
+    .section h2 { font-size: 24px; letter-spacing: -0.5px; }
+    .image-treatment-grid { grid-template-columns: 1fr; }
+  }
+
+  /* A11y utilities (.visually-hidden / .skip-link) and prefers-reduced-motion
+     MQ live in _shared/board.css. */
+</style>
+</head>
+<body>
+
+<a href="#main" class="skip-link">Skip to main content</a>
+<h1 class="visually-hidden">Linear Design System Reference</h1>
+
+<div class="wrap">
+
+<!-- ============ TOC ============ -->
+<nav class="toc">
+  <div class="toc-label">Linear Spec</div>
+
+  <div class="toc-group-label">Foundation</div>
+  <a href="#overview"><span class="num">00</span>Overview</a>
+  <a href="#theme"><span class="num">01</span>Visual Theme</a>
+  <a href="#characteristics"><span class="num">02</span>Key Characteristics</a>
+
+  <div class="toc-group-label">Color &amp; Type</div>
+  <a href="#color"><span class="num">03</span>Color Palette</a>
+  <a href="#typography"><span class="num">04</span>Typography</a>
+  <a href="#principles"><span class="num">05</span>Type Principles</a>
+
+  <div class="toc-group-label">Components</div>
+  <a href="#buttons"><span class="num">06</span>Buttons</a>
+  <a href="#cards"><span class="num">07</span>Cards</a>
+  <a href="#inputs"><span class="num">08</span>Inputs & Forms</a>
+  <a href="#nav"><span class="num">09</span>Navigation</a>
+  <a href="#distinctive"><span class="num">10</span>Distinctive Patterns</a>
+  <a href="#image-treatment"><span class="num" style="color: var(--color-accent)">✦</span>Image Treatment</a>
+
+  <div class="toc-group-label">Layout System</div>
+  <a href="#spacing"><span class="num">11</span>Spacing</a>
+  <a href="#radius"><span class="num">12</span>Radius Scale</a>
+  <a href="#elevation"><span class="num">13</span>Depth & Elevation</a>
+  <a href="#decorative-depth"><span class="num" style="color: var(--color-accent)">✦</span>Decorative Depth</a>
+
+  <div class="toc-group-label">Quality</div>
+  <a href="#responsive"><span class="num">14</span>Responsive</a>
+  <a href="#states"><span class="num">15</span>States</a>
+  <a href="#contrast"><span class="num">16</span>Accessibility</a>
+
+  <div class="toc-group-label">Meta &amp; Tooling</div>
+  <a href="#prompts"><span class="num">17</span>Agent Prompts</a>
+  <a href="#iteration"><span class="num">18</span>Iteration Guide</a>
+  <a href="#token-naming"><span class="num">19</span>Token Naming</a>
+  <a href="#semantic-colors"><span class="num">20</span>Semantic Families</a>
+  <a href="#motion"><span class="num">21</span>Motion Tokens</a>
+  <a href="#component-spec"><span class="num">22</span>Component Spec Template</a>
+</nav>
+
+<!-- ============ MAIN ============ -->
+<main class="main" id="main">
+
+<!-- Top bar -->
+<div class="top-bar">
+  <span class="breadcrumb">Design Boards</span>
+  <span style="color: var(--color-text-muted)">›</span>
+  <span class="current">Linear</span>
+  <div class="spacer"></div>
+  <span class="brand-pill">● Inter Variable · Dark-mode native</span>
+</div>
+
+<!-- ============ HERO ============ -->
+<section id="overview" class="hero">
+  <div class="chip">● Design System · Inspired by Linear</div>
+  <h1>The issue tracker<br/>you'll enjoy<br/>using.</h1>
+  <p class="sub">Dark-mode-native near-black canvas. Inter Variable with geometric alternates (<code style="font-family:'JetBrains Mono',monospace;font-size:14px;background:var(--color-bg-alt);padding:2px 6px;border-radius:4px">cv01 + ss03</code>) and signature weight 510. Indigo-violet as the single chromatic accent. Semi-transparent white borders. Precision engineering, not paper.</p>
+  <div class="hero-meta">
+    <div class="hero-meta-item">
+      <div class="label">Base unit</div>
+      <div class="value">4px</div>
+    </div>
+    <div class="hero-meta-item">
+      <div class="label">Accent</div>
+      <div class="value" style="color: var(--color-accent)">#5E6AD2</div>
+    </div>
+    <div class="hero-meta-item">
+      <div class="label">Typeface</div>
+      <div class="value">Inter Variable <span style="color: var(--color-text-muted); font-weight: 400; font-size: 14px; letter-spacing: 0">(wt 510 signature)</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 01 — VISUAL THEME ============ -->
+<section id="theme" class="section alt">
+  <div class="section-num">01 — Visual Theme &amp; Atmosphere</div>
+  <h2>Darkness as<br/>engineered medium.</h2>
+  <p class="lead">Linear's website is a masterclass in dark-mode-first product design — a near-black canvas where content emerges like starlight. Information density is managed through gradations of white opacity rather than color variation. This is not a dark theme applied to a light design; it is darkness as the native medium.</p>
+
+  <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 32px; max-width: 1100px;">
+    <div class="demo-card">
+      <h3>Dark canvas</h3>
+      <p class="body">Marketing black (<code style="font-family:'JetBrains Mono',monospace;font-size:13px;background:var(--color-bg-alt);padding:2px 6px;border-radius:4px">#08090a</code>) as the deepest surface, with an imperceptible blue-cool undertone. Panel dark (<code style="font-family:'JetBrains Mono',monospace;font-size:13px;background:var(--color-bg-alt);padding:2px 6px;border-radius:4px">#0f1011</code>) one step up. Near-white text at <code style="font-family:'JetBrains Mono',monospace;font-size:13px;background:var(--color-bg-alt);padding:2px 6px;border-radius:4px">#f7f8f8</code> — not pure, preventing eye strain.</p>
+    </div>
+    <div class="demo-card">
+      <h3>Whisper borders</h3>
+      <p class="body">Semi-transparent white at <code style="font-family:'JetBrains Mono',monospace;font-size:13px;background:var(--color-bg-alt);padding:2px 6px;border-radius:4px">rgba(255,255,255,0.05)</code> to <code style="font-family:'JetBrains Mono',monospace;font-size:13px;background:var(--color-bg-alt);padding:2px 6px;border-radius:4px">rgba(255,255,255,0.08)</code> — wireframes drawn in moonlight. Structure without visual noise.</p>
+    </div>
+    <div class="demo-card">
+      <h3>Inset + drop shadows</h3>
+      <p class="body">Dark surfaces get a subtle <code style="font-family:'JetBrains Mono',monospace;font-size:13px;background:var(--color-bg-alt);padding:2px 6px;border-radius:4px">inset 0 1px 0 rgba(255,255,255,0.03)</code> top highlight paired with dark drop shadow below. Depth from luminance, not just layering.</p>
+    </div>
+    <div class="demo-card">
+      <h3>Variable Inter at weight 510</h3>
+      <p class="body">Inter Variable with <code style="font-family:'JetBrains Mono',monospace;font-size:13px;background:var(--color-bg-alt);padding:2px 6px;border-radius:4px">cv01 + ss03</code>. Signature weight <strong>510</strong> sits between regular and medium — subtle emphasis that doesn't shout. Display sizes use aggressive negative tracking (−1.584px at 72px).</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 02 — KEY CHARACTERISTICS ============ -->
+<section id="characteristics" class="section">
+  <div class="section-num">02 — Key Characteristics</div>
+  <h2>Eight signals<br/>that make it <span style="color: var(--color-accent)">Linear</span>.</h2>
+  <p class="lead">If a new page you build carries any three of these traits, it already reads as Linear. If it carries all eight, it is indistinguishable.</p>
+
+  <div class="bullet-list">
+    <div class="bullet"><div class="bullet-num">01</div><div><strong>Dark-mode-native</strong>: <code style="font-family:'JetBrains Mono',monospace;font-size:12px">#08090a</code> marketing canvas. Information density via luminance gradations, not hue.</div></div>
+    <div class="bullet"><div class="bullet-num">02</div><div><strong>Inter Variable</strong> with <code style="font-family:'JetBrains Mono',monospace;font-size:12px">cv01 + ss03</code> — geometric alternates for a cleaner aesthetic.</div></div>
+    <div class="bullet"><div class="bullet-num">03</div><div><strong>Signature weight 510</strong> — between regular and medium — for most UI text. Variable font axis makes this possible.</div></div>
+    <div class="bullet"><div class="bullet-num">04</div><div><strong>Aggressive negative tracking at display</strong>: −1.584px at 72px, −1.056px at 48px. Engineered, not designed.</div></div>
+    <div class="bullet"><div class="bullet-num">05</div><div><strong>Brand indigo-violet</strong> (<code style="font-family:'JetBrains Mono',monospace;font-size:12px">#5e6ad2</code> / <code style="font-family:'JetBrains Mono',monospace;font-size:12px">#7170ff</code>) as the only chromatic color.</div></div>
+    <div class="bullet"><div class="bullet-num">06</div><div><strong>Semi-transparent white borders</strong>: rgba(255,255,255,0.05) to 0.08 throughout.</div></div>
+    <div class="bullet"><div class="bullet-num">07</div><div><strong>Near-zero button backgrounds</strong>: rgba(255,255,255,0.02) to 0.05 — buttons reveal on hover, not at rest.</div></div>
+    <div class="bullet"><div class="bullet-num">08</div><div><strong>4px base spacing</strong> (tighter than most) with multi-layer shadows including inset highlights for depth on dark.</div></div>
+  </div>
+</section>
+
+<!-- ============ 03 — COLOR PALETTE ============ -->
+<section id="color" class="section alt">
+  <div class="section-num">03 — Color Palette &amp; Roles</div>
+  <h2>Darkness as<br/>the native medium.</h2>
+  <p class="lead">Linear's palette is almost entirely achromatic — four depth levels of near-black, four gradations of silver-white text, and a single chromatic accent: brand indigo-violet. Borders are semi-transparent white at 5–8%. This is luminance, not hue.</p>
+
+  <div class="color-category">
+    <h3>Background Surfaces</h3>
+    <div class="color-grid">
+      <div class="color-card"><div class="color-swatch" style="background: #08090a"></div><div class="color-meta"><div class="color-name">Marketing Black</div><div class="color-hex">#08090A</div><div class="color-role">Deepest background — hero, marketing pages. Near-pure black with imperceptible blue-cool undertone</div></div></div>
+      <div class="color-card"><div class="color-swatch" style="background: #0f1011"></div><div class="color-meta"><div class="color-name">Panel Dark</div><div class="color-hex">#0F1011</div><div class="color-role">Sidebar and panel backgrounds. One step up from marketing black</div></div></div>
+      <div class="color-card"><div class="color-swatch" style="background: #191a1b"></div><div class="color-meta"><div class="color-name">Level 3 Surface</div><div class="color-hex">#191A1B</div><div class="color-role">Elevated surfaces — card backgrounds, dropdowns</div></div></div>
+      <div class="color-card"><div class="color-swatch" style="background: #28282c"></div><div class="color-meta"><div class="color-name">Secondary Surface</div><div class="color-hex">#28282C</div><div class="color-role">Lightest dark surface — hover states, slightly elevated components</div></div></div>
+    </div>
+  </div>
+
+  <div class="color-category">
+    <h3>Text &amp; Content</h3>
+    <div class="color-grid">
+      <div class="color-card"><div class="color-swatch" style="background: #f7f8f8"></div><div class="color-meta"><div class="color-name">Primary Text</div><div class="color-hex">#F7F8F8</div><div class="color-role">Near-white with a barely-warm cast. Default text — not pure white, prevents eye strain</div></div></div>
+      <div class="color-card"><div class="color-swatch" style="background: #d0d6e0"></div><div class="color-meta"><div class="color-name">Secondary Text</div><div class="color-hex">#D0D6E0</div><div class="color-role">Cool silver-gray for body, descriptions, secondary content</div></div></div>
+      <div class="color-card"><div class="color-swatch" style="background: #8a8f98"></div><div class="color-meta"><div class="color-name">Tertiary Text</div><div class="color-hex">#8A8F98</div><div class="color-role">Muted gray for placeholders, metadata, de-emphasized content</div></div></div>
+      <div class="color-card"><div class="color-swatch" style="background: #62666d"></div><div class="color-meta"><div class="color-name">Quaternary Text</div><div class="color-hex">#62666D</div><div class="color-role">Most subdued — timestamps, disabled states, subtle labels</div></div></div>
+    </div>
+  </div>
+
+  <div class="color-category">
+    <h3>Brand &amp; Accent</h3>
+    <div class="color-grid">
+      <div class="color-card"><div class="color-swatch" style="background: #5e6ad2"></div><div class="color-meta"><div class="color-name">Brand Indigo</div><div class="color-hex">#5E6AD2</div><div class="color-role">Primary brand color — CTA backgrounds, brand marks, key interactive surfaces</div></div></div>
+      <div class="color-card"><div class="color-swatch" style="background: #7170ff"></div><div class="color-meta"><div class="color-name">Accent Violet</div><div class="color-hex">#7170FF</div><div class="color-role">Brighter variant — links, active states, selected items</div></div></div>
+      <div class="color-card"><div class="color-swatch" style="background: #828fff"></div><div class="color-meta"><div class="color-name">Accent Hover</div><div class="color-hex">#828FFF</div><div class="color-role">Lighter, more saturated variant for hover on accent elements</div></div></div>
+      <div class="color-card"><div class="color-swatch" style="background: #7a7fad"></div><div class="color-meta"><div class="color-name">Security Lavender</div><div class="color-hex">#7A7FAD</div><div class="color-role">Muted indigo — specifically for security-related UI elements</div></div></div>
+    </div>
+  </div>
+
+  <div class="color-category">
+    <h3>Status</h3>
+    <div class="color-grid">
+      <div class="color-card"><div class="color-swatch" style="background: #27a644"></div><div class="color-meta"><div class="color-name">Green</div><div class="color-hex">#27A644</div><div class="color-role">Primary success / active — "in progress" indicators</div></div></div>
+      <div class="color-card"><div class="color-swatch" style="background: #10b981"></div><div class="color-meta"><div class="color-name">Emerald</div><div class="color-hex">#10B981</div><div class="color-role">Secondary success — pill badges, completion states</div></div></div>
+    </div>
+  </div>
+
+  <div class="color-category">
+    <h3>Border &amp; Divider</h3>
+    <div class="color-grid">
+      <div class="color-card"><div class="color-swatch" style="background: #23252a"></div><div class="color-meta"><div class="color-name">Border Primary</div><div class="color-hex">#23252A</div><div class="color-role">Solid dark border — prominent separations</div></div></div>
+      <div class="color-card"><div class="color-swatch" style="background: #34343a"></div><div class="color-meta"><div class="color-name">Border Secondary</div><div class="color-hex">#34343A</div><div class="color-role">Slightly lighter solid border</div></div></div>
+      <div class="color-card"><div class="color-swatch" style="background: #3e3e44"></div><div class="color-meta"><div class="color-name">Border Tertiary</div><div class="color-hex">#3E3E44</div><div class="color-role">Lightest solid border variant</div></div></div>
+      <div class="color-card"><div class="color-swatch" style="background: rgba(255,255,255,0.05)"></div><div class="color-meta"><div class="color-name">Border Subtle</div><div class="color-hex">rgba(255,255,255,0.05)</div><div class="color-role">Ultra-subtle semi-transparent border — the default</div></div></div>
+      <div class="color-card"><div class="color-swatch" style="background: rgba(255,255,255,0.08)"></div><div class="color-meta"><div class="color-name">Border Standard</div><div class="color-hex">rgba(255,255,255,0.08)</div><div class="color-role">Standard semi-transparent — cards, inputs, code blocks</div></div></div>
+      <div class="color-card"><div class="color-swatch" style="background: #141516"></div><div class="color-meta"><div class="color-name">Line Tint</div><div class="color-hex">#141516</div><div class="color-role">Nearly invisible line — subtlest divisions</div></div></div>
+    </div>
+  </div>
+
+  <div class="color-category">
+    <h3>Interactive Tokens</h3>
+    <div class="color-grid">
+      <div class="color-card"><div class="color-swatch" style="background: #7170ff"></div><div class="color-meta"><div class="color-name">Focus Ring</div><div class="color-hex">#7170FF</div><div class="color-role">Focus ring on interactive elements</div></div></div>
+      <div class="color-card"><div class="color-swatch" style="background: rgba(113,112,255,0.12); border: var(--border-subtle)"></div><div class="color-meta"><div class="color-name">Badge Bg</div><div class="color-hex">rgba(113,112,255,0.12)</div><div class="color-role">Pill badge background — tinted violet on dark</div></div></div>
+      <div class="color-card"><div class="color-swatch" style="background: rgba(255,255,255,0.02); border: var(--border-subtle)"></div><div class="color-meta"><div class="color-name">Button Bg Subtle</div><div class="color-hex">rgba(255,255,255,0.02)</div><div class="color-role">Ghost button — near-zero surface, reveals on hover</div></div></div>
+      <div class="color-card"><div class="color-swatch" style="background: rgba(255,255,255,0.05); border: var(--border-subtle)"></div><div class="color-meta"><div class="color-name">Button Bg Standard</div><div class="color-hex">rgba(255,255,255,0.05)</div><div class="color-role">Secondary button — subtle white overlay</div></div></div>
+      <div class="color-card"><div class="color-swatch" style="background: rgba(0,0,0,0.85)"></div><div class="color-meta"><div class="color-name">Overlay</div><div class="color-hex">rgba(0,0,0,0.85)</div><div class="color-role">Modal / dialog backdrop — extreme dark for focus isolation</div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 04 — TYPOGRAPHY ============ -->
+<section id="typography" class="section">
+  <div class="section-num">04 — Typography Hierarchy</div>
+  <h2>Fifteen roles,<br/>one variable family.</h2>
+  <p class="lead">Inter Variable from weight 300 to 590. The signature weight is <strong>510</strong> — between regular and medium, creating subtle emphasis that doesn't shout. Display sizes (72/64/48px) use aggressive negative letter-spacing (−1.584px at 72px) for an engineered feel.</p>
+
+  <div class="font-note">
+    <div class="font-note-label">Font note</div>
+    <p class="font-note-body">
+      Linear uses <strong>Inter Variable</strong> with OpenType features <code>cv01</code> (single-storey <em>a</em>) and <code>ss03</code> (geometric letterform variants) enabled globally. Variable font loading (<code>wght@100..900</code>) gives access to weight <strong>510</strong> — otherwise only discrete weights (400/500) are available. <strong>Berkeley Mono</strong> is Linear's private monospace (paid/SIL license); this board falls back to <code>JetBrains Mono</code>. Anywhere the spec says <em>Berkeley Mono</em>, use <code>font-family: 'JetBrains Mono', ui-monospace, SF Mono, Menlo</code>.
+    </p>
+  </div>
+
+  <div class="type-scale">
+    <div class="type-row">
+      <div class="type-meta"><div class="type-role">Display XL</div><div class="type-usage">Hero headlines, maximum impact</div></div>
+      <div class="type-sample" style="font-size: 72px; font-weight: 510; line-height: 1.0; letter-spacing: -1.584px;">Headline ab</div>
+      <div class="type-tokens"><span class="k">size</span><span class="v">72px · 4.50rem</span><span class="k">weight</span><span class="v">510</span><span class="k">line</span><span class="v">1.00</span><span class="k">track</span><span class="v">-1.584px</span></div>
+    </div>
+    <div class="type-row">
+      <div class="type-meta"><div class="type-role">Display Large</div><div class="type-usage">Secondary hero text</div></div>
+      <div class="type-sample" style="font-size: 64px; font-weight: 510; line-height: 1.0; letter-spacing: -1.408px;">Headline ab</div>
+      <div class="type-tokens"><span class="k">size</span><span class="v">64px · 4.00rem</span><span class="k">weight</span><span class="v">510</span><span class="k">line</span><span class="v">1.00</span><span class="k">track</span><span class="v">-1.408px</span></div>
+    </div>
+    <div class="type-row">
+      <div class="type-meta"><div class="type-role">Display</div><div class="type-usage">Section headlines</div></div>
+      <div class="type-sample" style="font-size: 48px; font-weight: 510; line-height: 1.0; letter-spacing: -1.056px;">Headline ab</div>
+      <div class="type-tokens"><span class="k">size</span><span class="v">48px · 3.00rem</span><span class="k">weight</span><span class="v">510</span><span class="k">line</span><span class="v">1.00</span><span class="k">track</span><span class="v">-1.056px</span></div>
+    </div>
+    <div class="type-row">
+      <div class="type-meta"><div class="type-role">Heading 1</div><div class="type-usage">Major section titles</div></div>
+      <div class="type-sample" style="font-size: 32px; font-weight: 400; line-height: 1.13; letter-spacing: -0.704px;">Major title ab</div>
+      <div class="type-tokens"><span class="k">size</span><span class="v">32px · 2.00rem</span><span class="k">weight</span><span class="v">400</span><span class="k">line</span><span class="v">1.13</span><span class="k">track</span><span class="v">-0.704px</span></div>
+    </div>
+    <div class="type-row">
+      <div class="type-meta"><div class="type-role">Heading 2</div><div class="type-usage">Subsection titles</div></div>
+      <div class="type-sample" style="font-size: 24px; font-weight: 510; line-height: 1.17; letter-spacing: -0.528px;">Subsection heading ab</div>
+      <div class="type-tokens"><span class="k">size</span><span class="v">24px · 1.50rem</span><span class="k">weight</span><span class="v">510</span><span class="k">line</span><span class="v">1.17</span><span class="k">track</span><span class="v">-0.528px</span></div>
+    </div>
+    <div class="type-row">
+      <div class="type-meta"><div class="type-role">Heading 3</div><div class="type-usage">Sub-subsection titles, card headers</div></div>
+      <div class="type-sample" style="font-size: 20px; font-weight: 510; line-height: 1.2; letter-spacing: -0.22px;">Card heading ab</div>
+      <div class="type-tokens"><span class="k">size</span><span class="v">20px · 1.25rem</span><span class="k">weight</span><span class="v">510</span><span class="k">line</span><span class="v">1.20</span><span class="k">track</span><span class="v">-0.22px</span></div>
+    </div>
+    <div class="type-row">
+      <div class="type-meta"><div class="type-role">Body Large</div><div class="type-usage">Lead copy, introductions</div></div>
+      <div class="type-sample" style="font-size: 18px; font-weight: 400; line-height: 1.55; color: var(--color-text-secondary);">Linear is built for teams who want to move fast without breaking things.</div>
+      <div class="type-tokens"><span class="k">size</span><span class="v">18px · 1.13rem</span><span class="k">weight</span><span class="v">400</span><span class="k">line</span><span class="v">1.55</span><span class="k">track</span><span class="v">normal</span></div>
+    </div>
+    <div class="type-row">
+      <div class="type-meta"><div class="type-role">Body</div><div class="type-usage">Standard reading text</div></div>
+      <div class="type-sample" style="font-size: 16px; font-weight: 400; line-height: 1.55;">The quick brown fox jumps over the lazy dog. All teams ship software faster.</div>
+      <div class="type-tokens"><span class="k">size</span><span class="v">16px · 1.00rem</span><span class="k">weight</span><span class="v">400</span><span class="k">line</span><span class="v">1.55</span><span class="k">track</span><span class="v">normal</span></div>
+    </div>
+    <div class="type-row">
+      <div class="type-meta"><div class="type-role">Body Medium</div><div class="type-usage">Dense UI text, button labels, nav</div></div>
+      <div class="type-sample" style="font-size: 14px; font-weight: 510; line-height: 1.55;">Sign in · Docs · Pricing · Open Linear</div>
+      <div class="type-tokens"><span class="k">size</span><span class="v">14px · 0.88rem</span><span class="k">weight</span><span class="v">510</span><span class="k">line</span><span class="v">1.55</span><span class="k">track</span><span class="v">normal</span></div>
+    </div>
+    <div class="type-row">
+      <div class="type-meta"><div class="type-role">Body Small</div><div class="type-usage">Captions, descriptions</div></div>
+      <div class="type-sample" style="font-size: 13px; font-weight: 400; line-height: 1.55; color: var(--color-text-secondary);">Figure — Linear's triage inbox with shortcuts overlay</div>
+      <div class="type-tokens"><span class="k">size</span><span class="v">13px · 0.81rem</span><span class="k">weight</span><span class="v">400</span><span class="k">line</span><span class="v">1.55</span><span class="k">track</span><span class="v">normal</span></div>
+    </div>
+    <div class="type-row">
+      <div class="type-meta"><div class="type-role">Label</div><div class="type-usage">Pills, buttons, status chips</div></div>
+      <div class="type-sample"><span class="brand-pill" style="font-size: 13px">● In Progress</span></div>
+      <div class="type-tokens"><span class="k">size</span><span class="v">13px · 0.81rem</span><span class="k">weight</span><span class="v">510</span><span class="k">line</span><span class="v">1.4</span><span class="k">track</span><span class="v">+0.02em</span></div>
+    </div>
+    <div class="type-row">
+      <div class="type-meta"><div class="type-role">Caption</div><div class="type-usage">Metadata, timestamps</div></div>
+      <div class="type-sample" style="font-size: 12px; font-weight: 400; line-height: 1.4; color: var(--color-text-muted);">Created 2 hours ago · Assigned to Lynn</div>
+      <div class="type-tokens"><span class="k">size</span><span class="v">12px · 0.75rem</span><span class="k">weight</span><span class="v">400</span><span class="k">line</span><span class="v">1.40</span><span class="k">track</span><span class="v">normal</span></div>
+    </div>
+    <div class="type-row">
+      <div class="type-meta"><div class="type-role">Micro</div><div class="type-usage">Tiny keycaps, section eyebrows</div></div>
+      <div class="type-sample" style="font-size: 11px; font-weight: 510; line-height: 1.4; letter-spacing: 0.04em; text-transform: uppercase; color: var(--color-text-muted);">ENG-1402 · High priority</div>
+      <div class="type-tokens"><span class="k">size</span><span class="v">11px · 0.69rem</span><span class="k">weight</span><span class="v">510</span><span class="k">line</span><span class="v">1.40</span><span class="k">track</span><span class="v">+0.04em</span></div>
+    </div>
+    <div class="type-row">
+      <div class="type-meta"><div class="type-role">Mono Regular</div><div class="type-usage">Code, technical labels</div></div>
+      <div class="type-sample" style="font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 400; line-height: 1.5;">const issue = linear.createIssue({ title })</div>
+      <div class="type-tokens"><span class="k">family</span><span class="v">Berkeley Mono</span><span class="k">size</span><span class="v">13px</span><span class="k">weight</span><span class="v">400</span><span class="k">line</span><span class="v">1.50</span></div>
+    </div>
+    <div class="type-row">
+      <div class="type-meta"><div class="type-role">Mono Small</div><div class="type-usage">Inline code, code labels</div></div>
+      <div class="type-sample" style="font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 400; line-height: 1.5; color: var(--color-text-secondary);">git rebase main && git push --force-with-lease</div>
+      <div class="type-tokens"><span class="k">family</span><span class="v">Berkeley Mono</span><span class="k">size</span><span class="v">12px</span><span class="k">weight</span><span class="v">400</span><span class="k">line</span><span class="v">1.50</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 05 — TYPE PRINCIPLES ============ -->
+<section id="principles" class="section alt">
+  <div class="section-num">05 — Typography Principles</div>
+  <h2>Compression scales<br/>with size.</h2>
+  <p class="lead">The bigger the type, the tighter it gets. Four rules govern the entire system.</p>
+
+  <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 24px; max-width: 1100px;">
+    <div class="demo-card">
+      <h3>Compression at scale</h3>
+      <p class="body">72px → −1.584px · 64px → −1.408px · 48px → −1.056px · 32px → −0.704px · 24px → −0.528px · 16px → normal. Headlines feel engineered — body text breathes.</p>
+    </div>
+    <div class="demo-card">
+      <h3>Weight 510 signature</h3>
+      <p class="body">Inter Variable's <strong>510</strong> sits between 400 (regular) and 500 (medium). Used for most UI text, display headings, labels, and micro-text. Creates consistent emphasis without the weight jumps of discrete-weight systems.</p>
+    </div>
+    <div class="demo-card">
+      <h3>Tight display, loose body</h3>
+      <p class="body">Line height contracts as size grows: 1.55 at body → 1.17–1.20 at heading → 1.00 at display. Denser headlines create authority; breathing body copy preserves readability.</p>
+    </div>
+    <div class="demo-card">
+      <h3>Label / Micro positive tracking</h3>
+      <p class="body">At 13px Label and 11px Micro, letter-spacing opens up to <code style="font-family:'JetBrains Mono',monospace;font-size:12px">+0.02em</code> and <code style="font-family:'JetBrains Mono',monospace;font-size:12px">+0.04em</code> respectively. Small text gets more room to breathe; large text gets compressed.</p>
+    </div>
+  </div>
+
+  <!-- Letter-spacing curve visualization -->
+  <div style="margin-top: 48px; padding: 40px; background: var(--color-bg-alt); border: var(--border-subtle); border-radius: 16px;">
+    <div class="section-num" style="margin-bottom: 16px">Letter-spacing Curve</div>
+    <svg width="100%" height="200" viewBox="0 0 800 200" preserveAspectRatio="none">
+      <line x1="0" y1="150" x2="800" y2="150" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+      <path d="M 0,180 C 120,180 200,175 300,150 C 420,125 520,80 660,35 L 800,5" fill="none" stroke="#7170ff" stroke-width="2.5"/>
+      <circle cx="800" cy="5" r="5" fill="#7170ff"/>
+      <text x="795" y="-2" fill="#8a8f98" font-size="11" font-family="JetBrains Mono" text-anchor="end">72px · -1.584px</text>
+      <circle cx="660" cy="35" r="4" fill="#7170ff"/>
+      <text x="660" y="28" fill="#8a8f98" font-size="11" font-family="JetBrains Mono" text-anchor="middle">64px · -1.408px</text>
+      <circle cx="520" cy="80" r="4" fill="#7170ff"/>
+      <text x="520" y="72" fill="#8a8f98" font-size="11" font-family="JetBrains Mono" text-anchor="middle">48px · -1.056px</text>
+      <circle cx="300" cy="150" r="4" fill="#7170ff"/>
+      <text x="300" y="142" fill="#8a8f98" font-size="11" font-family="JetBrains Mono" text-anchor="middle">32px · -0.704px</text>
+      <circle cx="0" cy="180" r="4" fill="#7170ff"/>
+      <text x="5" y="172" fill="#8a8f98" font-size="11" font-family="JetBrains Mono" text-anchor="start">16px · normal</text>
+    </svg>
+  </div>
+</section>
+
+<!-- ============ 06 — BUTTONS ============ -->
+<section id="buttons" class="section">
+  <div class="section-num">06 — Buttons</div>
+  <h2>Revealed on hover,<br/>never commanding.</h2>
+  <p class="lead">Linear's buttons live near-invisible at rest — <code style="font-family:'JetBrains Mono',monospace;font-size:13px;background:var(--color-bg-alt);padding:2px 6px;border-radius:4px">rgba(255,255,255,0.02–0.05)</code> backgrounds on dark — and reveal themselves on hover. Primary indigo for the one action that matters. Semi-transparent white for secondary. Ghost text for tertiary.</p>
+
+  <div class="btn-grid">
+    <div class="btn-card">
+      <h3>Primary Indigo</h3>
+      <p class="desc">The single action you want a user to take. Inset highlight + subtle border.</p>
+      <div class="btn-stage">
+        <button class="brand-btn-primary">Sign up for free</button>
+      </div>
+      <div class="btn-tokens">bg  #5e6ad2<br>text  #ffffff<br>pad  7px 14px<br>radius  6px<br>weight  510<br>border  1px rgba(255,255,255,0.08)<br>inset  0 1px 0 rgba(255,255,255,0.08)<br>hover  #6b77e0<br>active  translateY(1px)</div>
+    </div>
+
+    <div class="btn-card">
+      <h3>Secondary (Frosted)</h3>
+      <p class="desc">Translucent white surface. Hover raises opacity subtly.</p>
+      <div class="btn-stage">
+        <button class="brand-btn-secondary">Book a demo</button>
+      </div>
+      <div class="btn-tokens">bg  rgba(255,255,255,0.05)<br>text  #f7f8f8<br>pad  7px 14px<br>radius  6px<br>weight  510<br>border  1px rgba(255,255,255,0.08)<br>hover  bg rgba(255,255,255,0.08)</div>
+    </div>
+
+    <div class="btn-card">
+      <h3>Ghost / Inline Link</h3>
+      <p class="desc">Tertiary. Muted silver → primary text on hover. No background.</p>
+      <div class="btn-stage">
+        <button class="brand-btn-ghost">Read docs →</button>
+      </div>
+      <div class="btn-tokens">bg  transparent<br>text  #d0d6e0<br>pad  7px 14px<br>weight  510<br>hover  color #f7f8f8</div>
+    </div>
+
+    <div class="btn-card">
+      <h3>Status Pill</h3>
+      <p class="desc">Active/selected states. Tinted violet on dark with a subtle violet border.</p>
+      <div class="btn-stage">
+        <span class="brand-pill">● In Progress</span>
+      </div>
+      <div class="btn-tokens">bg  rgba(113,112,255,0.12)<br>text  #7170ff<br>pad  3px 9px<br>radius  9999px<br>border  1px rgba(113,112,255,0.22)<br>size  12px / 510 / +0.02em</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 07 — CARDS ============ -->
+<section id="cards" class="section alt">
+  <div class="section-num">07 — Cards &amp; Containers</div>
+  <h2>Panels carved<br/>from the dark.</h2>
+  <p class="lead">Dark surface (<code style="font-family:'JetBrains Mono',monospace;font-size:13px;background:var(--color-bg-alt);padding:2px 6px;border-radius:4px">#191a1b</code>) on canvas, semi-transparent white border, 8–12px radius. Inset top highlight + dark drop shadow. Cards feel <em>carved</em> from the void, not floating above it.</p>
+
+  <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; max-width: 1200px;">
+    <div class="demo-card">
+      <span class="brand-pill" style="margin-bottom: 14px">● Panel</span>
+      <h3>8px radius panel</h3>
+      <p class="body">Level-3 surface · <code style="font-family:'JetBrains Mono',monospace;font-size:12px">rgba(255,255,255,0.05)</code> border · inset highlight + drop shadow. The default container.</p>
+    </div>
+    <div class="demo-card featured">
+      <span class="brand-pill" style="margin-bottom: 14px">● Elevated</span>
+      <h3>12px radius, lifted</h3>
+      <p class="body">Dropdowns, modals, hero cards. Deeper shadow stack — 20px+ blur, inset highlight slightly stronger. Padding 28px.</p>
+    </div>
+    <div class="demo-card" style="padding: 0; overflow: hidden;">
+      <div style="height: 160px; background: linear-gradient(135deg, #191a1b 0%, #28282c 100%); border-radius: 8px 8px 0 0; position: relative;">
+        <div style="position: absolute; inset: 0; background: radial-gradient(circle at 30% 40%, rgba(113,112,255,0.15), transparent 60%);"></div>
+      </div>
+      <div style="padding: 24px">
+        <span class="brand-pill" style="margin-bottom: 14px">● Visual</span>
+        <h3>Media header</h3>
+        <p class="body">Top-rounded dark gradient with violet glow. Radius: <code style="font-family:'JetBrains Mono',monospace;font-size:12px">8px 8px 0 0</code>.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 08 — INPUTS ============ -->
+<section id="inputs" class="section">
+  <div class="section-num">08 — Inputs &amp; Forms</div>
+  <h2>Translucent fields<br/>on dark canvas.</h2>
+  <p class="lead">Input surface at <code style="font-family:'JetBrains Mono',monospace;font-size:13px;background:var(--color-bg-alt);padding:2px 6px;border-radius:4px">rgba(255,255,255,0.03)</code>, border at 8% white, 6px radius. Focus ring in violet — same <code style="font-family:'JetBrains Mono',monospace;font-size:13px;background:var(--color-bg-alt);padding:2px 6px;border-radius:4px">#7170ff</code> as interactive accent. Placeholder in tertiary gray.</p>
+
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; max-width: 900px;">
+    <div>
+      <div style="font-size:13px; font-weight:510; margin-bottom:8px; color: var(--color-text-secondary)">Default</div>
+      <input class="brand-input" placeholder="name@company.com" />
+      <div class="btn-tokens" style="margin-top:12px">bg  rgba(255,255,255,0.03)<br>border  1px rgba(255,255,255,0.08)<br>text  #f7f8f8<br>placeholder  #8a8f98<br>pad  8px 12px<br>radius  6px</div>
+    </div>
+    <div>
+      <div style="font-size:13px; font-weight:510; margin-bottom:8px; color: var(--color-text-secondary)">Focus</div>
+      <input class="brand-input" placeholder="Type an issue title…" style="border-color:#7170ff; box-shadow:0 0 0 3px rgba(113,112,255,0.18)" />
+      <div class="btn-tokens" style="margin-top:12px">border  1px solid #7170ff<br>ring  0 0 0 3px rgba(113,112,255,0.18)</div>
+    </div>
+    <div>
+      <div style="font-size:13px; font-weight:510; margin-bottom:8px; color: var(--color-text-secondary)">Filled</div>
+      <input class="brand-input" value="lynn@linear.app" />
+      <div class="btn-tokens" style="margin-top:12px">text  #f7f8f8<br>caret  #7170ff</div>
+    </div>
+    <div>
+      <div style="font-size:13px; font-weight:510; margin-bottom:8px; color: var(--color-text-secondary)">Disabled</div>
+      <input class="brand-input" placeholder="Not available" disabled style="background:rgba(255,255,255,0.02); color:#62666d; cursor:not-allowed; border-color:rgba(255,255,255,0.04)" />
+      <div class="btn-tokens" style="margin-top:12px">text  #62666d (quaternary)<br>bg  rgba(255,255,255,0.02)<br>aria-disabled  true</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 09 — NAV ============ -->
+<section id="nav" class="section alt">
+  <div class="section-num">09 — Navigation</div>
+<h2>Frosted dark bar,<br/>sticky &amp; tight.</h2>
+  <p class="lead">Semi-transparent panel with <code style="font-family:'JetBrains Mono',monospace;font-size:13px;background:var(--color-bg-alt);padding:2px 6px;border-radius:4px">backdrop-filter: blur(12px)</code>. Logo mark left (gradient indigo square), links 14px weight 510, sign-in ghost + primary CTA right. Sticky on scroll.</p>
+
+  <div class="nav-demo">
+    <div class="nav-brand">
+      <div class="nav-icon">L</div>
+      Linear
+    </div>
+    <div class="nav-links">
+      <a href="#">Product</a>
+      <a href="#">Method</a>
+      <a href="#">Customers</a>
+      <a href="#">Pricing</a>
+      <a href="#">Docs</a>
+    </div>
+    <a href="#" style="font-size:14px; font-weight:510; color:var(--color-text-secondary); text-decoration:none">Sign in</a>
+    <button class="brand-btn-primary">Open Linear</button>
+  </div>
+
+  <div style="margin-top: 32px; font-family:'JetBrains Mono',monospace; font-size: 12px; color: var(--color-text-secondary); line-height: 1.8;">
+    bg  rgba(15,16,17,0.72) · backdrop-filter blur(12px)  ·  sticky<br>
+    brand  22×22 gradient icon + 15px/510 wordmark<br>
+    links  14px / weight 510 / secondary gray<br>
+    link hover  color → primary<br>
+    cta  indigo pill (#5e6ad2 / 6px radius / 7px 14px) right-aligned<br>
+    mobile  hamburger drawer
+  </div>
+</section>
+
+<!-- ============ 10 — DISTINCTIVE PATTERNS ============ -->
+<section id="distinctive" class="section">
+  <div class="section-num">10 — Distinctive Patterns</div>
+  <h2>Metric · Trust · Status row.</h2>
+  <p class="lead">Three patterns carry Linear's marketing voice: big-number metrics in violet or white, company trust bars in pure silver, and status rows with inline issue chips (the Linear-specific pattern).</p>
+
+  <h3 style="font-size: 20px; font-weight: 510; letter-spacing: -0.22px; margin: 40px 0 16px;">Metric cards</h3>
+  <div class="metric-grid">
+    <div class="metric-card">
+      <div class="metric-num" style="color: var(--color-accent)">2.3×</div>
+      <div class="metric-desc">faster issue triage for teams using Linear's keyboard shortcuts daily.</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-num">&lt;50ms</div>
+      <div class="metric-desc">median UI latency — every interaction snaps, no loading spinners.</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-num">10,000+</div>
+      <div class="metric-desc">teams ship software with Linear, from YC startups to Fortune 500.</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-num">99.99%</div>
+      <div class="metric-desc">uptime across all regions. Your workflow doesn't get interrupted.</div>
+    </div>
+  </div>
+
+  <h3 style="font-size: 20px; font-weight: 510; letter-spacing: -0.22px; margin: 56px 0 16px;">Status row (Linear-native)</h3>
+  <div style="max-width: 720px;">
+    <div class="demo-card" style="padding: 0; overflow: hidden;">
+      <div style="padding: 16px 20px; display: flex; align-items: center; gap: 14px; border-bottom: 1px solid rgba(255,255,255,0.06);">
+        <div style="width: 16px; height: 16px; border-radius: 50%; border: 2px solid #27a644; position: relative;"><div style="position: absolute; inset: 2px; background: #27a644; border-radius: 50%; clip-path: polygon(0 0, 65% 0, 65% 100%, 0 100%);"></div></div>
+        <span style="font-family:'JetBrains Mono',monospace; font-size: 12px; color: var(--color-text-muted);">ENG-1402</span>
+        <span style="flex: 1; font-size: 14px; font-weight: 510;">Implement keyboard-first issue triage</span>
+        <span class="brand-pill">● In Progress</span>
+        <div style="width: 24px; height: 24px; border-radius: 50%; background: linear-gradient(135deg, #7170ff, #5e6ad2); font-size: 11px; font-weight: 510; color: white; display: flex; align-items: center; justify-content: center;">LH</div>
+      </div>
+      <div style="padding: 16px 20px; display: flex; align-items: center; gap: 14px; border-bottom: 1px solid rgba(255,255,255,0.06); opacity: 0.92;">
+        <div style="width: 16px; height: 16px; border-radius: 50%; border: 2px solid #10b981; background: #10b981; display: flex; align-items: center; justify-content: center;"><svg width="8" height="6" viewBox="0 0 8 6" fill="none"><path d="M1 3l2 2 4-4" stroke="#08090a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <span style="font-family:'JetBrains Mono',monospace; font-size: 12px; color: var(--color-text-muted);">ENG-1401</span>
+        <span style="flex: 1; font-size: 14px; font-weight: 510; color: var(--color-text-secondary); text-decoration: line-through; text-decoration-color: rgba(255,255,255,0.2);">Add violet focus ring to inputs</span>
+        <span class="brand-pill" style="background: rgba(16,185,129,0.12); color: #10b981; border-color: rgba(16,185,129,0.22);">✓ Done</span>
+      </div>
+      <div style="padding: 16px 20px; display: flex; align-items: center; gap: 14px;">
+        <div style="width: 16px; height: 16px; border-radius: 50%; border: 2px solid #62666d;"></div>
+        <span style="font-family:'JetBrains Mono',monospace; font-size: 12px; color: var(--color-text-muted);">ENG-1403</span>
+        <span style="flex: 1; font-size: 14px; font-weight: 510;">Rework elevation stack for Retina displays</span>
+        <span class="brand-pill" style="background: rgba(255,255,255,0.05); color: var(--color-text-muted); border-color: rgba(255,255,255,0.08);">Backlog</span>
+      </div>
+    </div>
+  </div>
+
+  <h3 style="font-size: 20px; font-weight: 510; letter-spacing: -0.22px; margin: 56px 0 16px;">Trust bar</h3>
+  <div style="background: var(--color-bg-alt); border: var(--border-subtle); border-radius: 10px; padding: 24px 32px;">
+    <div style="font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:510; color: var(--color-text-muted); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 18px;">Shipping software with Linear</div>
+    <div style="display:flex; gap: 44px; align-items: center; flex-wrap: wrap; font-size: 17px; font-weight: 510; letter-spacing: -0.01em; color: var(--color-text-secondary);">
+      <span>OpenAI</span>
+      <span>Vercel</span>
+      <span>Ramp</span>
+      <span>Mercury</span>
+      <span>Cash App</span>
+      <span>Arc</span>
+      <span>CoreWeave</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============ ✦ IMAGE TREATMENT (supplement, §4) ============ -->
+<section id="image-treatment" class="section">
+  <div class="section-num supplement">✦ Image Treatment<span class="supplement-origin">complements spec §4</span></div>
+  <h2>Product UI, lit from<br/>within the dark.</h2>
+  <p class="lead">Linear uses screenshots of its own product as the primary visual. No stock photos, no character illustrations, no 3D renders. Dashboards, issue views, and keyboard shortcut overlays — framed with whisper borders and violet glow edges so they emerge from the dark canvas like lit displays.</p>
+
+  <div class="template-scope-note">
+    <div class="template-scope-note-label">Template scope</div>
+    <div>The <strong>four-role grid</strong> (primary screenshot, image-as-header, glow hero, feature visual) is the reusable skeleton. The <strong>content inside each card</strong> — Linear's UI captures, violet hero glow, keyboard shortcut overlays — is Linear-specific and must be redrawn per brand (Notion → warm gradient + hand-drawn characters; Stripe → isometric 3D; Apple → product photography).</div>
+  </div>
+
+  <div class="image-treatment-grid">
+    <!-- Product screenshot -->
+    <div class="image-demo-card">
+      <div class="image-demo-visual" style="background: #0f1011;">
+        <div style="position: absolute; inset: 14px; background: #191a1b; border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 12px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), 0 1px 2px rgba(0,0,0,0.4);">
+          <div style="display: flex; gap: 6px; margin-bottom: 10px;">
+            <div style="width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.12);"></div>
+            <div style="width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.12);"></div>
+            <div style="width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.12);"></div>
+          </div>
+          <div style="height: 5px; width: 96px; background: rgba(255,255,255,0.14); border-radius: 2px; margin-bottom: 4px;"></div>
+          <div style="height: 4px; width: 64px; background: rgba(255,255,255,0.08); border-radius: 2px; margin-bottom: 12px;"></div>
+          <div style="display: flex; gap: 6px; margin-bottom: 4px;">
+            <div style="width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid #27a644;"></div>
+            <div style="height: 4px; flex: 1; background: rgba(255,255,255,0.08); border-radius: 2px; margin-top: 3px;"></div>
+          </div>
+          <div style="display: flex; gap: 6px; margin-bottom: 4px;">
+            <div style="width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid #10b981; background: #10b981;"></div>
+            <div style="height: 4px; flex: 1; background: rgba(255,255,255,0.05); border-radius: 2px; margin-top: 3px;"></div>
+          </div>
+          <div style="display: flex; gap: 6px;">
+            <div style="width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid rgba(255,255,255,0.25);"></div>
+            <div style="height: 4px; flex: 1; background: rgba(255,255,255,0.08); border-radius: 2px; margin-top: 3px;"></div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="image-demo-label">Product screenshot</div>
+        <div class="image-demo-spec"><code>1px solid rgba(255,255,255,0.08)</code> border · <code>6–8px</code> radius</div>
+        <div class="image-demo-role">Issue views, triage inboxes, keyboard overlays — the product showcasing itself.</div>
+      </div>
+    </div>
+
+    <!-- Top-rounded image (product → text) -->
+    <div class="image-demo-card">
+      <div class="image-demo-visual" style="background: var(--color-bg-surface-2);">
+        <div style="height: 120px; background: linear-gradient(180deg, #0f1011 0%, #191a1b 100%); border-bottom: 1px solid rgba(255,255,255,0.06); position: relative;">
+          <div style="position: absolute; inset: 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 4px;"></div>
+        </div>
+        <div style="padding: 14px 16px;">
+          <div style="font-size: 14px; font-weight: 510; margin-bottom: 4px;">Cycle progress</div>
+          <div style="font-size: 12px; color: var(--color-text-secondary); line-height: 1.5;">12 of 14 issues completed in the current sprint.</div>
+        </div>
+      </div>
+      <div>
+        <div class="image-demo-label">Image → text card</div>
+        <div class="image-demo-spec">radius: <code>8px 8px 0 0</code> · media top, text bottom</div>
+        <div class="image-demo-role">Screenshot lives in the top half, continuous into body copy below.</div>
+      </div>
+    </div>
+
+    <!-- Violet hero glow -->
+    <div class="image-demo-card">
+      <div class="image-demo-visual" style="background: radial-gradient(circle at 30% 40%, rgba(113,112,255,0.28) 0%, rgba(94,106,210,0.12) 35%, #08090a 70%); display: flex; align-items: center; justify-content: center;">
+        <div class="illus-placeholder on-gradient">
+          <strong>✦ product hero placeholder</strong>
+          <span>Linear UI on violet glow bed</span>
+        </div>
+      </div>
+      <div>
+        <div class="image-demo-label">Violet glow hero</div>
+        <div class="image-demo-spec">radial-gradient violet → dark · UI floats on glow</div>
+        <div class="image-demo-role">Hero sections: product UI placed on a soft violet radial glow emerging from dark canvas.</div>
+      </div>
+    </div>
+
+    <!-- Feature visual slot -->
+    <div class="image-demo-card">
+      <div class="image-demo-visual" style="background: var(--color-bg-surface-2); display: flex; align-items: center; justify-content: center;">
+        <div class="illus-placeholder">
+          <strong>✦ feature visual placeholder</strong>
+          <span>keyboard overlay · shortcuts grid</span>
+        </div>
+      </div>
+      <div>
+        <div class="image-demo-label">Feature visual</div>
+        <div class="image-demo-spec">20px title · 14px weight 510 body · surface-2 bg</div>
+        <div class="image-demo-role">Keyboard shortcut grids, workflow diagrams, before/after triage — product-centric visuals.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="rule-pair">
+    <div class="rule-card">
+      <div class="rule-label">Do</div>
+      <div class="rule-body">Whisper border every screenshot at <code style="font-family:'JetBrains Mono',monospace;font-size:12px;background:rgba(255,255,255,0.04);padding:1px 5px;border-radius:3px">rgba(255,255,255,0.08)</code>. Prefer product UI captures. Use violet radial glow for hero beds. Keep radii &lt;= 8px — Linear is sharp.</div>
+    </div>
+    <div class="rule-card dont">
+      <div class="rule-label">Don't</div>
+      <div class="rule-body">No hand-drawn character illustrations, no warm gradients, no bright saturated stock photos, no marketing-glossy 3D renders. Nothing that breaks the engineered dark-mode tone.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 11 — SPACING ============ -->
+<section id="spacing" class="section alt">
+  <div class="section-num">11 — Spacing System</div>
+  <h2>4px base,<br/>strict grid.</h2>
+  <p class="lead">Every value is a multiple of 4 — no fractional exceptions. Dense at the micro scale (inline icon gaps) and disciplined at the macro (96-144px section rhythm). Component padding is tighter than most systems; whitespace between blocks is generous.</p>
+
+  <div class="spacing-scale" style="max-width: 900px;">
+    <div class="spacing-row"><div class="spacing-label">4px · xs</div><div><div class="spacing-bar" style="width: 4px"></div></div><div class="spacing-label">Icon / label gap</div></div>
+    <div class="spacing-row"><div class="spacing-label">6px</div><div><div class="spacing-bar" style="width: 6px"></div></div><div class="spacing-label">Tight inline gap</div></div>
+    <div class="spacing-row"><div class="spacing-label">8px · s</div><div><div class="spacing-bar" style="width: 8px"></div></div><div class="spacing-label">Input padding y</div></div>
+    <div class="spacing-row"><div class="spacing-label">12px · sm</div><div><div class="spacing-bar" style="width: 12px"></div></div><div class="spacing-label">Button padding x, list row gap</div></div>
+    <div class="spacing-row"><div class="spacing-label">14px</div><div><div class="spacing-bar" style="width: 14px"></div></div><div class="spacing-label">Button padding x (primary)</div></div>
+    <div class="spacing-row"><div class="spacing-label">16px · m</div><div><div class="spacing-bar" style="width: 16px"></div></div><div class="spacing-label">Card inner padding (tight)</div></div>
+    <div class="spacing-row"><div class="spacing-label">20px</div><div><div class="spacing-bar" style="width: 20px"></div></div><div class="spacing-label">Standard row gap</div></div>
+    <div class="spacing-row"><div class="spacing-label">24px · l</div><div><div class="spacing-bar" style="width: 24px"></div></div><div class="spacing-label">Card padding, section gap</div></div>
+    <div class="spacing-row"><div class="spacing-label">32px · xl</div><div><div class="spacing-bar" style="width: 32px"></div></div><div class="spacing-label">Feature card padding, grid gap</div></div>
+    <div class="spacing-row"><div class="spacing-label">48px · 2xl</div><div><div class="spacing-bar" style="width: 48px"></div></div><div class="spacing-label">Section internal rhythm</div></div>
+    <div class="spacing-row"><div class="spacing-label">64px · 3xl</div><div><div class="spacing-bar" style="width: 64px"></div></div><div class="spacing-label">Section break (min)</div></div>
+    <div class="spacing-row"><div class="spacing-label">96px · 4xl</div><div><div class="spacing-bar" style="width: 96px"></div></div><div class="spacing-label">Section break (standard)</div></div>
+    <div class="spacing-row"><div class="spacing-label">128px · 5xl</div><div><div class="spacing-bar" style="width: 128px"></div></div><div class="spacing-label">Hero top padding</div></div>
+    <div class="spacing-row"><div class="spacing-label">144px · max</div><div><div class="spacing-bar" style="width: 144px"></div></div><div class="spacing-label">Section break (max)</div></div>
+  </div>
+
+  <div style="margin-top: 48px; padding: 24px; background: var(--color-bg-alt); border: var(--border-subtle); border-radius: 10px; max-width: 900px;">
+    <h3 style="font-size: 16px; font-weight: 510; margin: 0 0 8px">Whitespace philosophy</h3>
+    <p style="font-size: 15px; color: var(--color-text-secondary); line-height: 1.6; margin: 0">
+      <strong>Generous vertical rhythm</strong> — 96-144px between major sections · <strong>No section color alternation</strong> — the entire page is one unbroken dark canvas. Hierarchy comes from shadow depth and card surface, not bg swaps · <strong>Dense component, spacious composition</strong> — buttons and inputs hug their content tightly; the space between them breathes.
+    </p>
+  </div>
+</section>
+
+<!-- ============ 12 — RADIUS ============ -->
+<section id="radius" class="section">
+  <div class="section-num">12 — Border Radius Scale</div>
+  <h2>Six radii,<br/>precision-tuned.</h2>
+  <p class="lead">Sharper than most systems — Linear's radius tops out at 12px for cards. Buttons at 6px. Status pills at full-round 9999px. The system favors geometric precision over softness.</p>
+
+  <div class="radius-grid">
+    <div class="radius-card"><div class="radius-box" style="border-radius:4px"></div><div class="radius-name">Micro</div><div class="radius-value">4px · keyboard shortcut keys</div></div>
+    <div class="radius-card"><div class="radius-box" style="border-radius:6px"></div><div class="radius-name">Standard</div><div class="radius-value">6px · buttons, inputs</div></div>
+    <div class="radius-card"><div class="radius-box" style="border-radius:8px"></div><div class="radius-name">Panel</div><div class="radius-value">8px · cards, dropdowns</div></div>
+    <div class="radius-card"><div class="radius-box" style="border-radius:12px"></div><div class="radius-name">Elevated</div><div class="radius-value">12px · modals, hero cards</div></div>
+    <div class="radius-card"><div class="radius-box" style="border-radius:9999px"></div><div class="radius-name">Pill</div><div class="radius-value">9999px · status chips, pills</div></div>
+    <div class="radius-card"><div class="radius-box" style="border-radius:50%"></div><div class="radius-name">Circle</div><div class="radius-value">100% · avatars, issue indicators</div></div>
+  </div>
+</section>
+
+<!-- ============ 13 — ELEVATION ============ -->
+<section id="elevation" class="section alt">
+  <div class="section-num">13 — Depth &amp; Elevation</div>
+  <h2>Five levels,<br/>inset + drop.</h2>
+  <p class="lead">On dark canvas, shadows alone don't read — a <strong>subtle inset white highlight on the top edge</strong> paired with a dark drop shadow below creates depth that the eye can actually see. Think candlelight on a dark panel, not a floating card.</p>
+
+  <div class="elevation-grid">
+    <div class="elevation-sample l0">
+      <div class="elevation-level">LEVEL 0</div>
+      <div class="elevation-name">Flat</div>
+      <div class="elevation-use">No shadow, no border. Page bg, text blocks.</div>
+    </div>
+    <div class="elevation-sample l1">
+      <div class="elevation-level">LEVEL 1</div>
+      <div class="elevation-name">Whisper Border</div>
+      <div class="elevation-use">1px solid rgba(255,255,255,0.05–0.08). The default separator.</div>
+    </div>
+    <div class="elevation-sample l2">
+      <div class="elevation-level">LEVEL 2</div>
+      <div class="elevation-name">Soft Panel</div>
+      <div class="elevation-use">Inset top highlight + dark drop shadow. Content cards at rest.</div>
+    </div>
+    <div class="elevation-sample l3">
+      <div class="elevation-level">LEVEL 3</div>
+      <div class="elevation-name">Deep Panel</div>
+      <div class="elevation-use">Stronger inset + 20–48px blur drop. Modals, dropdowns, elevated surfaces.</div>
+    </div>
+    <div class="elevation-sample l4">
+      <div class="elevation-level">LEVEL 4</div>
+      <div class="elevation-name">Focus Ring</div>
+      <div class="elevation-use">2px violet outline + 3px violet glow. Keyboard focus on any interactive.</div>
+    </div>
+  </div>
+
+  <div style="margin-top: 40px; padding: 24px 28px; background: var(--color-bg-canvas); border: var(--border-subtle); border-radius: 10px; max-width: 900px;">
+    <div class="section-num" style="margin-bottom: 12px">Soft Panel (Level 2)</div>
+    <pre style="font-family:'JetBrains Mono',monospace; font-size: 12px; color: var(--color-text-secondary); margin: 0; white-space: pre-wrap; line-height: 1.7;">inset 0 1px 0    rgba(255,255,255,0.03)
+0    1px 2px     rgba(0,0,0,0.35)
+0    4px 12px    rgba(0,0,0,0.25)</pre>
+  </div>
+
+  <div style="margin-top: 16px; padding: 24px 28px; background: var(--color-bg-canvas); border: var(--border-subtle); border-radius: 10px; max-width: 900px;">
+    <div class="section-num" style="margin-bottom: 12px">Deep Panel (Level 3)</div>
+    <pre style="font-family:'JetBrains Mono',monospace; font-size: 12px; color: var(--color-text-secondary); margin: 0; white-space: pre-wrap; line-height: 1.7;">inset 0 1px 0    rgba(255,255,255,0.04)
+0    2px 4px     rgba(0,0,0,0.4)
+0    8px 24px    rgba(0,0,0,0.35)
+0    20px 48px   rgba(0,0,0,0.3)</pre>
+  </div>
+</section>
+
+<!-- ============ ✦ DECORATIVE DEPTH (supplement, §6) ============ -->
+<section id="decorative-depth" class="section">
+  <div class="section-num supplement">✦ Decorative Depth<span class="supplement-origin">complements spec §6</span></div>
+  <h2>Depth through<br/>surface, not color.</h2>
+  <p class="lead">Linear's page-long flow doesn't alternate background colors — the entire canvas stays <code style="font-family: 'JetBrains Mono', monospace; font-size: 13px; background: var(--color-bg-alt); padding: 2px 6px; border-radius: 4px;">#08090a</code>. Hierarchy comes from surface depth: elevated cards (<code style="font-family: 'JetBrains Mono', monospace; font-size: 13px; background: var(--color-bg-alt); padding: 2px 6px; border-radius: 4px;">#191a1b</code>) catch light; violet glows punctuate heroes; whisper borders draw soft geometry.</p>
+
+  <div class="template-scope-note">
+    <div class="template-scope-note-label">Template scope</div>
+    <div>The <strong>page-rhythm preview</strong> + <strong>3 principles</strong> + <strong>Do/Don't</strong> skeleton is reusable. The <strong>rhythm philosophy itself</strong> is Linear-specific: each brand makes a different visual argument here — Notion alternates white / warm-white; Apple alternates white / pure-black; Stripe uses gradient bands as section breakers. Rewrite the three principles and the 5-strip preview content per brand.</div>
+  </div>
+
+  <!-- Dark canvas rhythm preview — no bg alternation, depth via surface -->
+  <div style="max-width: 900px; margin: 32px 0;">
+    <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--color-text-secondary); margin-bottom: 10px;">Page rhythm preview — single canvas, layered surfaces</div>
+    <div style="border: var(--border-subtle); border-radius: 10px; overflow: hidden; box-shadow: var(--elevation-soft);">
+      <div style="padding: 28px 36px; background: #08090a;">
+        <div style="font-size: 13px; font-weight: 510; color: var(--color-text-primary); margin-bottom: 2px;">Hero section</div>
+        <div style="font-size: 11px; color: var(--color-text-secondary); line-height: 1.5;">Marketing canvas · radial violet glow for the headline</div>
+      </div>
+      <div style="padding: 28px 36px; background: #08090a; border-top: 1px solid rgba(255,255,255,0.04);">
+        <div style="display: inline-block; padding: 8px 14px; background: #191a1b; border: 1px solid rgba(255,255,255,0.06); border-radius: 6px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.03); margin-bottom: 6px;"><span style="font-size: 12px; font-weight: 510; color: var(--color-text-primary);">Elevated card</span></div>
+        <div style="font-size: 11px; color: var(--color-text-secondary); line-height: 1.5;">Feature card lifts off canvas with inset highlight + drop shadow</div>
+      </div>
+      <div style="padding: 28px 36px; background: #08090a; border-top: 1px solid rgba(255,255,255,0.04);">
+        <div style="font-size: 13px; font-weight: 510; color: var(--color-text-primary); margin-bottom: 2px;">Content strip</div>
+        <div style="font-size: 11px; color: var(--color-text-secondary); line-height: 1.5;">Back to flat canvas — no alternation, just air</div>
+      </div>
+      <div style="padding: 28px 36px; background: #08090a; border-top: 1px solid rgba(255,255,255,0.04); position: relative;">
+        <div style="position: absolute; inset: 0; background: radial-gradient(circle at 30% 50%, rgba(113,112,255,0.12), transparent 60%); pointer-events: none;"></div>
+        <div style="position: relative; z-index: 1;">
+          <div style="font-size: 13px; font-weight: 510; color: var(--color-text-primary); margin-bottom: 2px;">Feature block</div>
+          <div style="font-size: 11px; color: var(--color-text-secondary); line-height: 1.5;">Violet radial glow announces "look here" without bg swap</div>
+        </div>
+      </div>
+      <div style="padding: 28px 36px; background: #08090a; border-top: 1px solid rgba(255,255,255,0.04);">
+        <div style="font-size: 13px; font-weight: 510; color: var(--color-text-primary); margin-bottom: 2px;">Closing CTA</div>
+        <div style="font-size: 11px; color: var(--color-text-secondary); line-height: 1.5;">Dark to end — the page never "brightens"</div>
+      </div>
+    </div>
+    <div style="font-size: 12.5px; color: var(--color-text-secondary); margin-top: 10px; line-height: 1.55;">
+      <strong style="color: var(--color-text-primary); font-weight: 510;">Observation:</strong> five sections, one background color. Depth comes from surface (card), accent (violet glow), and air — not bg swaps.
+    </div>
+  </div>
+
+  <!-- Violet glow hero slot + three principles -->
+  <div style="display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 20px; max-width: 900px;">
+    <div class="image-demo-card">
+      <div class="image-demo-visual" style="background: radial-gradient(circle at 30% 40%, rgba(113,112,255,0.32) 0%, rgba(94,106,210,0.14) 35%, #08090a 70%); display: flex; align-items: center; justify-content: center;">
+        <div class="illus-placeholder on-gradient">
+          <strong>✦ hero glow placeholder</strong>
+          <span>product UI on violet radial halo</span>
+        </div>
+      </div>
+      <div>
+        <div class="image-demo-label">Violet glow hero bed</div>
+        <div class="image-demo-spec">radial-gradient violet → canvas · product overlay</div>
+        <div class="image-demo-role">Hero sections: soft violet halo emerges from dark canvas, lighting up the product UI. Avoid hero illustrations, stock photography, or geometric backgrounds.</div>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 12px;">
+      <div style="padding: 16px 20px; background: var(--color-bg-alt); border: var(--border-subtle); border-left: 3px solid var(--color-accent); border-radius: 8px;">
+        <div style="font-size: 13px; font-weight: 510; margin-bottom: 4px;">1 — One canvas, many surfaces</div>
+        <div style="font-size: 12.5px; color: var(--color-text-secondary); line-height: 1.55;">Background stays <code style="font-family: 'JetBrains Mono', monospace; font-size: 11px; background: rgba(255,255,255,0.04); padding: 1px 4px; border-radius: 3px;">#08090a</code> across the whole page. Hierarchy happens on cards (<code style="font-family: 'JetBrains Mono', monospace; font-size: 11px; background: rgba(255,255,255,0.04); padding: 1px 4px; border-radius: 3px;">#191a1b</code>) that lift with inset highlight + drop shadow.</div>
+      </div>
+      <div style="padding: 16px 20px; background: var(--color-bg-alt); border: var(--border-subtle); border-left: 3px solid var(--color-accent); border-radius: 8px;">
+        <div style="font-size: 13px; font-weight: 510; margin-bottom: 4px;">2 — Generous vertical rhythm</div>
+        <div style="font-size: 12.5px; color: var(--color-text-secondary); line-height: 1.55;">96&ndash;144px vertical padding between major sections. Dense components, spacious composition — space is the luxury on dark.</div>
+      </div>
+      <div style="padding: 16px 20px; background: var(--color-bg-alt); border: var(--border-subtle); border-left: 3px solid var(--color-accent); border-radius: 8px;">
+        <div style="font-size: 13px; font-weight: 510; margin-bottom: 4px;">3 — Violet glow as punctuation</div>
+        <div style="font-size: 12.5px; color: var(--color-text-secondary); line-height: 1.55;">When a section needs to feel "primary," add a radial violet glow at <code style="font-family: 'JetBrains Mono', monospace; font-size: 11px; background: rgba(255,255,255,0.04); padding: 1px 4px; border-radius: 3px;">rgba(113,112,255,0.12)</code>. No bg swap — the glow carries the emphasis.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="rule-pair">
+    <div class="rule-card">
+      <div class="rule-label">Do</div>
+      <div class="rule-body">Keep the background one dark color across the whole page. Build hierarchy with card surfaces (<code style="font-family:'JetBrains Mono',monospace;font-size:12px;background:rgba(255,255,255,0.04);padding:1px 5px;border-radius:3px">#191a1b</code>) lifting off canvas. Use radial violet glows to announce hero/CTA sections.</div>
+    </div>
+    <div class="rule-card dont">
+      <div class="rule-label">Don't</div>
+      <div class="rule-body">Don't alternate bg colors between sections — no dark/lighter-dark stripes. Don't use warm gradients. Don't introduce a light-mode section for "contrast" — Linear stays dark end-to-end.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 14 — RESPONSIVE ============ -->
+<section id="responsive" class="section">
+  <div class="section-num">14 — Responsive Behavior</div>
+  <h2>Seven breakpoints,<br/>graceful decay.</h2>
+  <p class="lead">Hero 72px → 48px → 32px on mobile. 3-column → 2 → 1. Frosted nav bar → hamburger drawer. Section rhythm 96–144px on desktop → 48–64px on mobile. Dark canvas stays dark across all sizes — no light-mode swap.</p>
+
+  <div class="bp-table">
+    <div class="bp-row head">
+      <div>Name</div>
+      <div>Width</div>
+      <div>Key Changes</div>
+    </div>
+    <div class="bp-row"><div class="bp-name">Mobile Small</div><div class="bp-width">&lt; 400px</div><div class="bp-notes">Tight single column, minimal padding</div></div>
+    <div class="bp-row"><div class="bp-name">Mobile</div><div class="bp-width">400–600px</div><div class="bp-notes">Standard mobile, stacked layout</div></div>
+    <div class="bp-row"><div class="bp-name">Tablet Small</div><div class="bp-width">600–768px</div><div class="bp-notes">2-column grids begin</div></div>
+    <div class="bp-row"><div class="bp-name">Tablet</div><div class="bp-width">768–1080px</div><div class="bp-notes">Full card grids, expanded padding</div></div>
+    <div class="bp-row"><div class="bp-name">Desktop Small</div><div class="bp-width">1080–1200px</div><div class="bp-notes">Standard desktop layout</div></div>
+    <div class="bp-row"><div class="bp-name">Desktop</div><div class="bp-width">1200–1440px</div><div class="bp-notes">Full layout, max content width</div></div>
+    <div class="bp-row"><div class="bp-name">Large Desktop</div><div class="bp-width">&gt; 1440px</div><div class="bp-notes">Centered, generous margins</div></div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 32px; max-width: 1100px;">
+    <div class="demo-card">
+      <h3 style="font-size: 16px">Touch targets</h3>
+      <p class="body" style="font-size: 14px">Buttons at 7–14px padding become 9–16px on touch devices (min 44×44 tap area). Pills expand from 3×9 to 5×12. Nav hamburger opens a full-height drawer.</p>
+    </div>
+    <div class="demo-card">
+      <h3 style="font-size: 16px">Dark canvas stability</h3>
+      <p class="body" style="font-size: 14px">The <code style="font-family:'JetBrains Mono',monospace;font-size:12px">#08090a</code> background holds at every breakpoint. No auto-switch to light mode on small screens. Frosted bars get taller (44→56px) to keep blur readable.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 15 — STATES ============ -->
+<section id="states" class="section alt">
+  <div class="section-num">15 — Interactive States</div>
+  <h2>Five states,<br/>subtle feedback.</h2>
+  <p class="lead">Linear avoids aggressive motion. States shift via background opacity, border brightness, and a <code style="font-family:'JetBrains Mono',monospace;font-size:13px;background:var(--color-bg-alt);padding:2px 6px;border-radius:4px">translateY(1px)</code> on active — not scale transforms. Focus rings use violet glow, not hard outlines.</p>
+
+  <div class="states-grid">
+    <div class="state-card">
+      <div class="btn-mock" style="background: #5e6ad2; color: white; box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);">Sign in</div>
+      <div class="state-label">Default</div>
+      <div class="state-desc">resting indigo</div>
+    </div>
+    <div class="state-card">
+      <div class="btn-mock" style="background: #6b77e0; color: white; box-shadow: inset 0 1px 0 rgba(255,255,255,0.12);">Sign in</div>
+      <div class="state-label">Hover</div>
+      <div class="state-desc">bg lighter by ~6%</div>
+    </div>
+    <div class="state-card">
+      <div class="btn-mock" style="background: #4c57b8; color: white; transform: translateY(1px);">Sign in</div>
+      <div class="state-label">Active</div>
+      <div class="state-desc">translateY(1px) · bg darker</div>
+    </div>
+    <div class="state-card">
+      <div class="btn-mock" style="background: #5e6ad2; color: white; outline: 2px solid #7170ff; outline-offset: 2px; box-shadow: 0 0 0 4px rgba(113,112,255,0.18)">Sign in</div>
+      <div class="state-label">Focus</div>
+      <div class="state-desc">violet ring + glow</div>
+    </div>
+    <div class="state-card">
+      <div class="btn-mock" style="background: rgba(94,106,210,0.28); color: rgba(255,255,255,0.4);">Sign in</div>
+      <div class="state-label">Disabled</div>
+      <div class="state-desc">alpha 28% bg · text 40%</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 16 — CONTRAST ============ -->
+<section id="contrast" class="section">
+  <div class="section-num">16 — Accessibility &amp; Contrast</div>
+  <h2>Luminance ratios<br/>on dark canvas.</h2>
+  <p class="lead">Primary text at <code style="font-family:'JetBrains Mono',monospace;font-size:13px;background:var(--color-bg-alt);padding:2px 6px;border-radius:4px">#f7f8f8</code> on <code style="font-family:'JetBrains Mono',monospace;font-size:13px;background:var(--color-bg-alt);padding:2px 6px;border-radius:4px">#08090a</code> lands at ~18:1 — WCAG AAA with room to spare. Every text/surface pair in the palette is pre-cleared for AA at minimum.</p>
+
+  <div class="contrast-grid">
+    <div class="contrast-card">
+      <div class="contrast-ratio">~18:1</div>
+      <div class="contrast-label">Primary Text</div>
+      <div class="contrast-pair" style="background:#08090a; color:#f7f8f8; border:1px solid rgba(255,255,255,0.06)">#F7F8F8 on #08090A</div>
+      <span class="wcag-badge" style="background:rgba(39,166,68,0.14); color:#6eca86; border:1px solid rgba(39,166,68,0.4)">WCAG AAA</span>
+    </div>
+    <div class="contrast-card">
+      <div class="contrast-ratio">~11:1</div>
+      <div class="contrast-label">Secondary Text</div>
+      <div class="contrast-pair" style="background:#08090a; color:#d0d6e0; border:1px solid rgba(255,255,255,0.06)">#D0D6E0 on #08090A</div>
+      <span class="wcag-badge" style="background:rgba(39,166,68,0.14); color:#6eca86; border:1px solid rgba(39,166,68,0.4)">WCAG AAA</span>
+    </div>
+    <div class="contrast-card">
+      <div class="contrast-ratio">~5.2:1</div>
+      <div class="contrast-label">Tertiary Text</div>
+      <div class="contrast-pair" style="background:#08090a; color:#8a8f98; border:1px solid rgba(255,255,255,0.06)">#8A8F98 on #08090A</div>
+      <span class="wcag-badge" style="background:rgba(39,166,68,0.14); color:#6eca86; border:1px solid rgba(39,166,68,0.4)">WCAG AA</span>
+    </div>
+    <div class="contrast-card">
+      <div class="contrast-ratio">~5.1:1</div>
+      <div class="contrast-label">Accent Violet</div>
+      <div class="contrast-pair" style="background:#08090a; color:#7170ff; border:1px solid rgba(255,255,255,0.06)">#7170FF on #08090A</div>
+      <span class="wcag-badge" style="background:rgba(39,166,68,0.14); color:#6eca86; border:1px solid rgba(39,166,68,0.4)">WCAG AA (normal)</span>
+    </div>
+  </div>
+
+  <div style="margin-top: 32px; padding: 24px 28px; background: var(--color-bg-alt); border: var(--border-subtle); border-radius: 10px; max-width: 900px;">
+    <h3 style="font-size: 16px; font-weight: 510; margin: 0 0 10px">Focus System</h3>
+    <p class="body" style="font-size: 14px; margin: 0">All interactive elements receive <code style="font-family:'JetBrains Mono',monospace;font-size:12px;background:rgba(255,255,255,0.04);padding:2px 6px;border-radius:4px">2px solid #7170ff</code> outline + <code style="font-family:'JetBrains Mono',monospace;font-size:12px;background:rgba(255,255,255,0.04);padding:2px 6px;border-radius:4px">0 0 0 3px rgba(113,112,255,0.18)</code> glow. The glow gives focus a soft halo visible even against the deepest blacks. <code style="font-family:'JetBrains Mono',monospace;font-size:12px;background:rgba(255,255,255,0.04);padding:2px 6px;border-radius:4px">outline-offset: 2px</code> on buttons, zero on inputs. Tab navigation works throughout.</p>
+  </div>
+</section>
+
+<!-- ============ 17 — AGENT PROMPTS ============ -->
+<section id="prompts" class="section alt">
+  <div class="section-num">17 — Agent Prompt Guide</div>
+  <h2>Tell the agent,<br/>in Linear's own terms.</h2>
+  <p class="lead">Copy-pasteable building blocks. Each prompt carries enough spec that a coding agent can produce a Linear-faithful component without follow-up.</p>
+
+  <div class="prompt-grid">
+    <div class="prompt-card">
+      <span class="tag">Hero</span>
+      Create a hero section on marketing black background (#08090a). Headline at 72px Inter Variable weight 510 (load Inter with font-feature-settings "cv01","ss03"), line-height 1.0, letter-spacing -1.584px, color #f7f8f8. Subtitle at 18px weight 400, line-height 1.55, color #d0d6e0. Indigo CTA button (#5e6ad2, 6px radius, 7px 14px padding, white text, inset 0 1px 0 rgba(255,255,255,0.08) highlight) and ghost button (transparent bg, secondary text, hover to primary).
+    </div>
+    <div class="prompt-card">
+      <span class="tag">Panel</span>
+      Design a dark panel: background #191a1b, 1px solid rgba(255,255,255,0.06) border, 8px radius. Shadow: inset 0 1px 0 rgba(255,255,255,0.03), 0 1px 2px rgba(0,0,0,0.35), 0 4px 12px rgba(0,0,0,0.25). Title at 20px Inter weight 510, letter-spacing -0.22px, color #f7f8f8. Body at 14px weight 400, color #d0d6e0.
+    </div>
+    <div class="prompt-card">
+      <span class="tag">Status Pill</span>
+      Build a status pill: background rgba(113,112,255,0.12), text color #7170ff, 1px solid rgba(113,112,255,0.22) border, 9999px radius, 3px 9px padding, 12px Inter weight 510, letter-spacing +0.02em.
+    </div>
+    <div class="prompt-card">
+      <span class="tag">Nav</span>
+      Create navigation: sticky frosted bar (background rgba(15,16,17,0.72), backdrop-filter blur(12px), 1px solid rgba(255,255,255,0.06) border, 10px radius). 22×22 gradient logo mark (linear-gradient(135deg, #5e6ad2, #7170ff) with inset highlight). Links at 14px Inter weight 510, color #d0d6e0, hover to #f7f8f8. Indigo CTA "Open Linear" right-aligned.
+    </div>
+    <div class="prompt-card">
+      <span class="tag">Issue Row</span>
+      Design an issue row (Linear-specific): horizontal layout, 16px padding, bottom border rgba(255,255,255,0.06). Elements in order: 16×16 progress circle (border #27a644 for in-progress, fill + checkmark for done, gray outline for backlog), monospace ID "ENG-1402" at 12px color #8a8f98, title at 14px weight 510, status pill right-aligned, 24×24 circular avatar with gradient bg.
+    </div>
+  </div>
+</section>
+
+<!-- ============ 18 — ITERATION ============ -->
+<section id="iteration" class="section">
+  <div class="section-num">18 — Iteration Guide</div>
+  <h2>Eight rules you<br/>can't violate.</h2>
+  <p class="lead">Print this list and tape it to your monitor. If you break any of these, it stops being Linear.</p>
+
+  <div class="iter-list">
+    <div class="iter-item"><div class="iter-text">Dark is the canvas. <code style="font-family:'JetBrains Mono',monospace;font-size:13px;background:var(--color-bg-alt);padding:2px 6px;border-radius:4px">#08090a</code> for marketing, <code style="font-family:'JetBrains Mono',monospace;font-size:13px;background:var(--color-bg-alt);padding:2px 6px;border-radius:4px">#0f1011</code> for panels. Never white, never light-mode by default.</div></div>
+    <div class="iter-item"><div class="iter-text">Inter Variable with <code style="font-family:'JetBrains Mono',monospace;font-size:13px;background:var(--color-bg-alt);padding:2px 6px;border-radius:4px">"cv01","ss03"</code> globally. Weight 510 for most UI text, not 400 or 500.</div></div>
+    <div class="iter-item"><div class="iter-text">Letter-spacing scales with font size: −1.584px at 72px · −1.056px at 48px · −0.528px at 24px · normal at 16px · <strong>positive</strong> at 13px Label (+0.02em) and 11px Micro (+0.04em).</div></div>
+    <div class="iter-item"><div class="iter-text">Borders are semi-transparent white: <code style="font-family:'JetBrains Mono',monospace;font-size:13px;background:var(--color-bg-alt);padding:2px 6px;border-radius:4px">rgba(255,255,255,0.05)</code> default, 0.08 for stronger separation. <strong>Never</strong> solid black or solid white borders.</div></div>
+    <div class="iter-item"><div class="iter-text">Elevation uses inset top highlight + dark drop shadow. Inset creates the edge, drop creates the depth. <strong>Never</strong> plain drop shadow alone — it disappears on dark.</div></div>
+    <div class="iter-item"><div class="iter-text">No warm/cool section alternation. The page is one unbroken dark canvas. Hierarchy comes from card surface (level-3 #191a1b vs canvas #08090a), not bg swaps.</div></div>
+    <div class="iter-item"><div class="iter-text">Button radius is 6px, panel radius is 8px, modal radius is 12px. <strong>Never</strong> larger than 12px — Linear is sharp.</div></div>
+    <div class="iter-item"><div class="iter-text">Brand indigo (<code style="font-family:'JetBrains Mono',monospace;font-size:13px;background:var(--color-bg-alt);padding:2px 6px;border-radius:4px">#5e6ad2</code>) is the <strong>only</strong> chromatic color in core UI. Status green/emerald appears only on progress indicators. Use accents sparingly.</div></div>
+  </div>
+</section>
+
+<!-- ============ 19 — TOKEN NAMING ============ -->
+<section id="token-naming" class="section">
+  <div class="section-num">19 — Token Naming Convention</div>
+  <h2>One name shape.<br/>Everywhere.</h2>
+  <p class="lead">Before the first component is built, lock the naming. Rename later and every file needs to change. The pattern: <code style="font-family:'JetBrains Mono',monospace;font-size:15px;background:var(--color-bg-alt);padding:4px 10px;border-radius:6px;">--{category}-{role}-{variant}-{state}</code>.</p>
+
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 1100px;">
+    <div class="demo-card">
+      <h3 style="font-size: 16px; color: var(--color-accent)">Color</h3>
+      <pre style="font-family:'JetBrains Mono',monospace; font-size: 12px; color: var(--color-text-secondary); margin: 12px 0 0; line-height: 1.8; white-space: pre-wrap;">--color-bg-canvas        /* #08090a marketing   */
+--color-bg-alt           /* #0f1011 panel       */
+--color-bg-surface-2     /* #191a1b elevated    */
+--color-bg-surface-3     /* #28282c hover/lift  */
+--color-bg-inverse       /* #f7f8f8 light-mode  */
+
+--color-text-primary     /* #f7f8f8 near-white  */
+--color-text-secondary   /* #d0d6e0 silver      */
+--color-text-muted       /* #8a8f98 muted gray  */
+--color-text-quaternary  /* #62666d disabled    */
+
+--border-subtle          /* rgba(255,255,255,0.05) */
+--border-standard        /* rgba(255,255,255,0.08) */
+--border-solid           /* #23252a solid 1px   */
+
+--color-accent           /* #5e6ad2 indigo     */
+--color-accent-hover     /* #6b77e0 brighter   */
+--color-accent-pressed   /* #4c57b8 darker     */</pre>
+    </div>
+
+    <div class="demo-card">
+      <h3 style="font-size: 16px; color: var(--color-accent)">Space / Radius / Elevation</h3>
+      <pre style="font-family:'JetBrains Mono',monospace; font-size: 12px; color: var(--color-text-secondary); margin: 12px 0 0; line-height: 1.8; white-space: pre-wrap;">/* 4px base — strict grid */
+--space-1, --space-2, --space-3,
+--space-4, --space-6, --space-8,
+--space-12, --space-16, --space-20,
+--space-24, --space-32, --space-48,
+--space-64, --space-96, --space-128
+
+--radius-micro      /* 4px  shortcut keys  */
+--radius-standard   /* 6px  buttons/inputs */
+--radius-panel      /* 8px  cards          */
+--radius-elevated   /* 12px modals         */
+--radius-pill       /* 9999 status chips   */
+--radius-circle     /* 50%  avatars        */
+
+--elevation-flat      /* level 0 */
+--elevation-whisper   /* level 1 — border */
+--elevation-soft      /* level 2 — panel  */
+--elevation-deep      /* level 3 — modal  */
+--elevation-focus     /* level 4 — ring   */</pre>
+    </div>
+
+    <div class="demo-card">
+      <h3 style="font-size: 16px; color: var(--color-accent)">Typography</h3>
+      <pre style="font-family:'JetBrains Mono',monospace; font-size: 12px; color: var(--color-text-secondary); margin: 12px 0 0; line-height: 1.8; white-space: pre-wrap;">/* Inter Variable · weight axis */
+--text-display-xl       /* 72/510 · -1.584px */
+--text-display-large    /* 64/510 · -1.408px */
+--text-display          /* 48/510 · -1.056px */
+--text-heading-1        /* 32/400 · -0.704px */
+--text-heading-2        /* 24/510 · -0.528px */
+--text-heading-3        /* 20/510 · -0.22px  */
+--text-body-large       /* 18/400            */
+--text-body             /* 16/400            */
+--text-body-medium      /* 14/510            */
+--text-body-small       /* 13/400            */
+--text-label            /* 13/510 · +0.02em  */
+--text-caption          /* 12/400            */
+--text-micro            /* 11/510 · +0.04em  */
+
+/* Berkeley Mono → JetBrains fallback */
+--text-mono-regular     /* 13/400 mono       */
+--text-mono-small       /* 12/400 mono       */</pre>
+    </div>
+
+    <div class="demo-card">
+      <h3 style="font-size: 16px; color: var(--color-accent)">Motion</h3>
+      <pre style="font-family:'JetBrains Mono',monospace; font-size: 12px; color: var(--color-text-secondary); margin: 12px 0 0; line-height: 1.8; white-space: pre-wrap;">--motion-duration-fast   /* 120ms */
+--motion-duration-base   /* 200ms */
+--motion-duration-slow   /* 400ms */
+
+--motion-ease-out        /* ui default       */
+--motion-ease-in-out     /* transitions      */
+--motion-ease-spring     /* playful bounces  */
+
+/* composition */
+--transition-hover: transform
+  var(--motion-duration-fast)
+  var(--motion-ease-out);</pre>
+    </div>
+  </div>
+
+  <div style="margin-top: 40px; max-width: 1100px;">
+    <h3 style="font-size: 22px; font-weight: 700; letter-spacing: -0.25px; margin: 0 0 16px;">Rules of the name</h3>
+    <div class="iter-list">
+      <div class="iter-item"><div class="iter-text"><strong>Semantic over visual.</strong> Use <code style="font-family:'JetBrains Mono',monospace;font-size:13px;background:var(--color-bg-alt);padding:2px 6px;border-radius:4px">--color-text-primary</code>, not <code style="font-family:'JetBrains Mono',monospace;font-size:13px;background:var(--color-bg-alt);padding:2px 6px;border-radius:4px">--color-black-95</code>. Visual names break when the brand shifts; semantic names survive.</div></div>
+      <div class="iter-item"><div class="iter-text"><strong>State is a suffix, not a prefix.</strong> <code style="font-family:'JetBrains Mono',monospace;font-size:13px;background:var(--color-bg-alt);padding:2px 6px;border-radius:4px">--color-accent-hover</code> (good). <code style="font-family:'JetBrains Mono',monospace;font-size:13px;background:var(--color-bg-alt);padding:2px 6px;border-radius:4px">--hover-color-accent</code> (bad).</div></div>
+      <div class="iter-item"><div class="iter-text"><strong>No component names in base tokens.</strong> <code style="font-family:'JetBrains Mono',monospace;font-size:13px;background:var(--color-bg-alt);padding:2px 6px;border-radius:4px">--button-bg</code> is a component token. It should reference a base: <code style="font-family:'JetBrains Mono',monospace;font-size:13px;background:var(--color-bg-alt);padding:2px 6px;border-radius:4px">--button-bg: var(--color-accent)</code>. Two-layer system — never hardcode.</div></div>
+      <div class="iter-item"><div class="iter-text"><strong>Scale uses numbers, role uses words.</strong> Spacing/radius follow <code style="font-family:'JetBrains Mono',monospace;font-size:13px;background:var(--color-bg-alt);padding:2px 6px;border-radius:4px">--space-8</code>. Semantic roles follow <code style="font-family:'JetBrains Mono',monospace;font-size:13px;background:var(--color-bg-alt);padding:2px 6px;border-radius:4px">--color-text-secondary</code>. Don't mix.</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 20 — SEMANTIC FAMILIES ============ -->
+<section id="semantic-colors" class="section alt">
+  <div class="section-num">20 — Semantic Color Families</div>
+  <h2>Four states,<br/>four surfaces each.</h2>
+  <p class="lead">A single hex is never enough. Success / Warning / Error / Info each need four surfaces: <em>background</em>, <em>border</em>, <em>text</em>, <em>icon</em>. Without this, your alerts and inputs will silently drift.</p>
+
+  <!-- Success -->
+  <div style="margin-bottom: 40px;">
+    <h3 style="font-size: 20px; font-weight: 510; letter-spacing: -0.22px; margin: 0 0 16px;">Success</h3>
+    <div style="display: grid; grid-template-columns: repeat(4, 1fr) 1.6fr; gap: 12px; align-items: stretch;">
+      <div class="color-card"><div class="color-swatch" style="background: rgba(39,166,68,0.14); border-bottom: var(--border-subtle);"></div><div class="color-meta"><div class="color-name">Success / bg</div><div class="color-hex">rgba(39,166,68,0.14)</div></div></div>
+      <div class="color-card"><div class="color-swatch" style="background: rgba(39,166,68,0.42);"></div><div class="color-meta"><div class="color-name">Success / border</div><div class="color-hex">rgba(39,166,68,0.42)</div></div></div>
+      <div class="color-card"><div class="color-swatch" style="background: #6eca86;"></div><div class="color-meta"><div class="color-name">Success / text</div><div class="color-hex">#6ECA86</div></div></div>
+      <div class="color-card"><div class="color-swatch" style="background: #27a644;"></div><div class="color-meta"><div class="color-name">Success / icon</div><div class="color-hex">#27A644</div></div></div>
+      <div style="background: rgba(39,166,68,0.14); border: 1px solid rgba(39,166,68,0.42); border-radius: 8px; padding: 14px 16px; display: flex; align-items: flex-start; gap: 12px;">
+        <div style="width: 20px; height: 20px; border-radius: 50%; background: #27a644; color: white; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 13px; font-weight: 600;">✓</div>
+        <div><div style="font-size: 14px; font-weight: 510; color: #6eca86; margin-bottom: 2px;">Issue closed</div><div style="font-size: 13px; color: #6eca86; line-height: 1.4;">ENG-1401 merged and deployed to production.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Warning -->
+  <div style="margin-bottom: 40px;">
+    <h3 style="font-size: 20px; font-weight: 510; letter-spacing: -0.22px; margin: 0 0 16px;">Warning</h3>
+    <div style="display: grid; grid-template-columns: repeat(4, 1fr) 1.6fr; gap: 12px; align-items: stretch;">
+      <div class="color-card"><div class="color-swatch" style="background: rgba(247,104,8,0.14); border-bottom: var(--border-subtle);"></div><div class="color-meta"><div class="color-name">Warning / bg</div><div class="color-hex">rgba(247,104,8,0.14)</div></div></div>
+      <div class="color-card"><div class="color-swatch" style="background: rgba(247,104,8,0.42);"></div><div class="color-meta"><div class="color-name">Warning / border</div><div class="color-hex">rgba(247,104,8,0.42)</div></div></div>
+      <div class="color-card"><div class="color-swatch" style="background: #ffb278;"></div><div class="color-meta"><div class="color-name">Warning / text</div><div class="color-hex">#FFB278</div></div></div>
+      <div class="color-card"><div class="color-swatch" style="background: #f76808;"></div><div class="color-meta"><div class="color-name">Warning / icon</div><div class="color-hex">#F76808</div></div></div>
+      <div style="background: rgba(247,104,8,0.14); border: 1px solid rgba(247,104,8,0.42); border-radius: 8px; padding: 14px 16px; display: flex; align-items: flex-start; gap: 12px;">
+        <div style="width: 20px; height: 20px; border-radius: 50%; background: #f76808; color: white; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 13px; font-weight: 600;">!</div>
+        <div><div style="font-size: 14px; font-weight: 510; color: #ffb278; margin-bottom: 2px;">Cycle ending in 2 days</div><div style="font-size: 13px; color: #ffb278; line-height: 1.4;">3 issues still open in the current sprint.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Error -->
+  <div style="margin-bottom: 40px;">
+    <h3 style="font-size: 20px; font-weight: 510; letter-spacing: -0.22px; margin: 0 0 16px;">Error</h3>
+    <div style="display: grid; grid-template-columns: repeat(4, 1fr) 1.6fr; gap: 12px; align-items: stretch;">
+      <div class="color-card"><div class="color-swatch" style="background: rgba(235,74,87,0.14); border-bottom: var(--border-subtle);"></div><div class="color-meta"><div class="color-name">Error / bg</div><div class="color-hex">rgba(235,74,87,0.14)</div></div></div>
+      <div class="color-card"><div class="color-swatch" style="background: rgba(235,74,87,0.42);"></div><div class="color-meta"><div class="color-name">Error / border</div><div class="color-hex">rgba(235,74,87,0.42)</div></div></div>
+      <div class="color-card"><div class="color-swatch" style="background: #f6a8b0;"></div><div class="color-meta"><div class="color-name">Error / text</div><div class="color-hex">#F6A8B0</div></div></div>
+      <div class="color-card"><div class="color-swatch" style="background: #eb4a57;"></div><div class="color-meta"><div class="color-name">Error / icon</div><div class="color-hex">#EB4A57</div></div></div>
+      <div style="background: rgba(235,74,87,0.14); border: 1px solid rgba(235,74,87,0.42); border-radius: 8px; padding: 14px 16px; display: flex; align-items: flex-start; gap: 12px;">
+        <div style="width: 20px; height: 20px; border-radius: 50%; background: #eb4a57; color: white; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 13px; font-weight: 600;">×</div>
+        <div><div style="font-size: 14px; font-weight: 510; color: #f6a8b0; margin-bottom: 2px;">Build failed</div><div style="font-size: 13px; color: #f6a8b0; line-height: 1.4;">Type error in <code style="font-family:'JetBrains Mono',monospace;font-size:12px;background:rgba(0,0,0,0.2);padding:1px 5px;border-radius:3px;">apps/web/pages/index.tsx:42</code></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Info -->
+  <div>
+    <h3 style="font-size: 20px; font-weight: 510; letter-spacing: -0.22px; margin: 0 0 16px;">Info</h3>
+    <div style="display: grid; grid-template-columns: repeat(4, 1fr) 1.6fr; gap: 12px; align-items: stretch;">
+      <div class="color-card"><div class="color-swatch" style="background: rgba(113,112,255,0.14); border-bottom: var(--border-subtle);"></div><div class="color-meta"><div class="color-name">Info / bg</div><div class="color-hex">rgba(113,112,255,0.14)</div></div></div>
+      <div class="color-card"><div class="color-swatch" style="background: rgba(113,112,255,0.42);"></div><div class="color-meta"><div class="color-name">Info / border</div><div class="color-hex">rgba(113,112,255,0.42)</div></div></div>
+      <div class="color-card"><div class="color-swatch" style="background: #a8acf0;"></div><div class="color-meta"><div class="color-name">Info / text</div><div class="color-hex">#A8ACF0</div></div></div>
+      <div class="color-card"><div class="color-swatch" style="background: #7170ff;"></div><div class="color-meta"><div class="color-name">Info / icon</div><div class="color-hex">#7170FF</div></div></div>
+      <div style="background: rgba(113,112,255,0.14); border: 1px solid rgba(113,112,255,0.42); border-radius: 8px; padding: 14px 16px; display: flex; align-items: flex-start; gap: 12px;">
+        <div style="width: 20px; height: 20px; border-radius: 50%; background: #7170ff; color: white; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 13px; font-weight: 600;">i</div>
+        <div><div style="font-size: 14px; font-weight: 510; color: #a8acf0; margin-bottom: 2px;">New team member</div><div style="font-size: 13px; color: #a8acf0; line-height: 1.4;">Lynn joined Engineering. Assign issues with <kbd style="font-family:'JetBrains Mono',monospace;font-size:11px;background:rgba(0,0,0,0.3);padding:2px 6px;border-radius:3px;border:1px solid rgba(255,255,255,0.1);">A</kbd> then <kbd style="font-family:'JetBrains Mono',monospace;font-size:11px;background:rgba(0,0,0,0.3);padding:2px 6px;border-radius:3px;border:1px solid rgba(255,255,255,0.1);">L</kbd></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top: 40px; padding: 20px 24px; background: var(--color-bg-canvas); border: var(--border-subtle); border-radius: 10px; max-width: 900px;">
+    <h3 style="font-size: 14px; font-weight: 510; margin: 0 0 6px; color: var(--color-accent);">Why four surfaces per state on dark?</h3>
+    <p style="font-size: 14px; color: var(--color-text-secondary); line-height: 1.55; margin: 0;">On dark canvas, a single hex can't cover all four roles — the same green that works for an icon turns muddy as a text color on a green-tinted surface. Linear uses semi-transparent tints (<code style="font-family:'JetBrains Mono',monospace;font-size:12px;background:rgba(255,255,255,0.04);padding:2px 6px;border-radius:4px">rgba(…,0.14)</code> bg / <code style="font-family:'JetBrains Mono',monospace;font-size:12px;background:rgba(255,255,255,0.04);padding:2px 6px;border-radius:4px">0.42</code> border) plus a lightened text variant to guarantee readability without losing the semantic signal.</p>
+  </div>
+</section>
+
+<!-- ============ 21 — MOTION TOKENS ============ -->
+<section id="motion" class="section">
+  <div class="section-num">21 — Motion Tokens</div>
+  <h2>Three durations.<br/>Three curves.<br/>That's it.</h2>
+  <p class="lead">Linear avoids excessive motion — UI feedback is fast and subtle. Lock three durations (120/200/400ms) and three easing curves upfront. Override only with a clear reason.</p>
+
+  <h3 style="font-size: 22px; font-weight: 700; letter-spacing: -0.25px; margin: 32px 0 16px;">Duration scale</h3>
+  <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; max-width: 1000px;">
+    <div class="demo-card motion-demo" data-dur="120">
+      <div class="section-num" style="margin-bottom: 8px">120ms · fast</div>
+      <h3>Micro-interactions</h3>
+      <p class="body" style="font-size: 14px">Button hover, icon state, input focus ring. Should feel immediate — no lag, no animation.</p>
+      <div style="margin-top: 16px; height: 40px; background: var(--color-bg-alt); border-radius: 6px; position: relative; overflow: hidden;">
+        <div class="motion-bar" style="position: absolute; top: 0; left: 0; width: 30%; height: 100%; background: var(--color-accent); border-radius: 0 6px 6px 0; transition: transform 120ms ease-out;"></div>
+      </div>
+    </div>
+    <div class="demo-card motion-demo" data-dur="200">
+      <div class="section-num" style="margin-bottom: 8px">200ms · base</div>
+      <h3>Standard transitions</h3>
+      <p class="body" style="font-size: 14px">Card hover lift, modal open, tab switch, dropdown reveal. The default for almost everything.</p>
+      <div style="margin-top: 16px; height: 40px; background: var(--color-bg-alt); border-radius: 6px; position: relative; overflow: hidden;">
+        <div class="motion-bar" style="position: absolute; top: 0; left: 0; width: 30%; height: 100%; background: var(--color-accent); border-radius: 0 6px 6px 0; transition: transform 200ms ease-out;"></div>
+      </div>
+    </div>
+    <div class="demo-card motion-demo" data-dur="400">
+      <div class="section-num" style="margin-bottom: 8px">400ms · slow</div>
+      <h3>Content reveal</h3>
+      <p class="body" style="font-size: 14px">Page transitions, large panel slides, hero illustration entrances. Anything asking for attention.</p>
+      <div style="margin-top: 16px; height: 40px; background: var(--color-bg-alt); border-radius: 6px; position: relative; overflow: hidden;">
+        <div class="motion-bar" style="position: absolute; top: 0; left: 0; width: 30%; height: 100%; background: var(--color-accent); border-radius: 0 6px 6px 0; transition: transform 400ms ease-out;"></div>
+      </div>
+    </div>
+  </div>
+
+  <h3 style="font-size: 22px; font-weight: 700; letter-spacing: -0.25px; margin: 48px 0 16px;">Easing curves</h3>
+  <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; max-width: 1000px;">
+    <div class="demo-card">
+      <div class="section-num" style="margin-bottom: 8px">cubic-bezier(0.2, 0, 0, 1)</div>
+      <h3 style="font-size: 16px">Ease-out</h3>
+      <p class="body" style="font-size: 13px">Default for UI. Fast start, soft stop. Feels responsive.</p>
+      <svg width="100%" height="60" viewBox="0 0 200 60"><path d="M 0,55 C 40,55 60,5 200,5" fill="none" stroke="#7170ff" stroke-width="2"/></svg>
+    </div>
+    <div class="demo-card">
+      <div class="section-num" style="margin-bottom: 8px">cubic-bezier(0.4, 0, 0.2, 1)</div>
+      <h3 style="font-size: 16px">Ease-in-out</h3>
+      <p class="body" style="font-size: 13px">Soft both ends. Modal opens, page transitions.</p>
+      <svg width="100%" height="60" viewBox="0 0 200 60"><path d="M 0,55 C 60,55 140,5 200,5" fill="none" stroke="#7170ff" stroke-width="2"/></svg>
+    </div>
+    <div class="demo-card">
+      <div class="section-num" style="margin-bottom: 8px">cubic-bezier(0.34, 1.56, 0.64, 1)</div>
+      <h3 style="font-size: 16px">Ease-spring</h3>
+      <p class="body" style="font-size: 13px">Slight overshoot. Playful micro-delights only. Rare.</p>
+      <svg width="100%" height="60" viewBox="0 0 200 60"><path d="M 0,55 C 40,55 80,-15 120,5 C 140,15 180,5 200,5" fill="none" stroke="#7170ff" stroke-width="2"/></svg>
+    </div>
+  </div>
+
+  <div style="margin-top: 40px; padding: 20px 24px; background: var(--color-bg-canvas); border: var(--border-subtle); border-radius: 10px; max-width: 900px;">
+    <h3 style="font-size: 14px; font-weight: 510; margin: 0 0 6px; color: var(--color-accent);">Respect reduced-motion</h3>
+    <p style="font-size: 14px; color: var(--color-text-secondary); line-height: 1.55; margin: 0;">Wrap non-essential motion in <code style="font-family:'JetBrains Mono',monospace;font-size:12px;background:rgba(255,255,255,0.04);padding:2px 6px;border-radius:4px">@media (prefers-reduced-motion: reduce)</code>. Duration → 0ms, transforms → none. Essential feedback (focus rings, keyboard press) stays.</p>
+  </div>
+</section>
+
+<!-- ============ 22 — COMPONENT SPEC TEMPLATE ============ -->
+<section id="component-spec" class="section alt">
+  <div class="section-num">22 — Component Spec Template</div>
+  <h2>One shape for every<br/>future component.</h2>
+  <p class="lead">Every new component written to this template will be consistent with the rest. Worked example: Button. When you add Select / Modal / Toast / Table — each gets a page like this.</p>
+
+  <!-- Worked example: Button -->
+  <div style="background: var(--color-bg-canvas); border: var(--border-subtle); border-radius: 12px; padding: 40px; max-width: 1100px; box-shadow: var(--elevation-soft);">
+    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 24px;">
+      <span class="brand-pill">● Worked example</span>
+      <div style="font-size: 12px; color: var(--color-text-secondary); font-family:'JetBrains Mono',monospace;">component/button.md</div>
+    </div>
+    <h3 style="font-size: 32px; font-weight: 700; letter-spacing: -0.625px; margin: 0 0 8px;">Button</h3>
+    <p style="font-size: 17px; color: var(--color-text-secondary); line-height: 1.5; margin: 0 0 32px;">Triggers an action. The most-used interactive in any product — get this one right.</p>
+
+    <!-- 1. Anatomy -->
+    <div style="border-top: var(--border-subtle); padding-top: 24px; margin-bottom: 32px;">
+      <div class="section-num" style="margin-bottom: 12px">01 · Anatomy</div>
+      <div style="display: flex; gap: 32px; align-items: center; padding: 24px; background: var(--color-bg-alt); border-radius: 12px;">
+        <button class="brand-btn-primary" style="gap: 8px; display: inline-flex; align-items: center;">
+          <span>+</span> Create issue <span style="font-size: 11px; opacity: 0.7; font-family:'JetBrains Mono',monospace;">C</span>
+        </button>
+        <div style="font-size: 13px; color: var(--color-text-secondary); line-height: 1.7;">
+          <strong>Leading icon</strong> · <strong>Label</strong> · <strong>Trailing hint</strong><br/>
+          All three are optional except label.
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. Variants -->
+    <div style="border-top: var(--border-subtle); padding-top: 24px; margin-bottom: 32px;">
+      <div class="section-num" style="margin-bottom: 12px">02 · Variants</div>
+      <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;">
+        <div style="text-align: center;"><button class="brand-btn-primary">Primary</button><div style="font-size: 12px; color: var(--color-text-secondary); margin-top: 10px; font-family:'JetBrains Mono',monospace;">variant=primary</div></div>
+        <div style="text-align: center;"><button class="brand-btn-secondary">Secondary</button><div style="font-size: 12px; color: var(--color-text-secondary); margin-top: 10px; font-family:'JetBrains Mono',monospace;">variant=secondary</div></div>
+        <div style="text-align: center;"><button class="brand-btn-ghost">Ghost</button><div style="font-size: 12px; color: var(--color-text-secondary); margin-top: 10px; font-family:'JetBrains Mono',monospace;">variant=ghost</div></div>
+        <div style="text-align: center;"><button style="background:#eb4a57; color:white; padding:7px 14px; border-radius:6px; border:1px solid rgba(255,255,255,0.08); box-shadow: inset 0 1px 0 rgba(255,255,255,0.08); font-size:14px; font-weight:510; font-family:inherit; cursor:pointer; letter-spacing: -0.01em;">Delete</button><div style="font-size: 12px; color: var(--color-text-secondary); margin-top: 10px; font-family:'JetBrains Mono',monospace;">variant=destructive</div></div>
+      </div>
+    </div>
+
+    <!-- 3. Sizes -->
+    <div style="border-top: var(--border-subtle); padding-top: 24px; margin-bottom: 32px;">
+      <div class="section-num" style="margin-bottom: 12px">03 · Sizes</div>
+      <div style="display: flex; gap: 24px; align-items: center; padding: 20px; background: var(--color-bg-alt); border-radius: 12px;">
+        <div style="text-align: center;"><button style="background:var(--color-accent); color:white; padding:4px 10px; border-radius:4px; border:none; font-size:13px; font-weight:600; font-family:inherit;">Small</button><div style="font-size: 11px; color: var(--color-text-secondary); margin-top: 8px; font-family:'JetBrains Mono',monospace;">size=sm · 13/4px/10px</div></div>
+        <div style="text-align: center;"><button class="brand-btn-primary">Medium (default)</button><div style="font-size: 11px; color: var(--color-text-secondary); margin-top: 8px; font-family:'JetBrains Mono',monospace;">size=md · 15/8px/16px</div></div>
+        <div style="text-align: center;"><button style="background:var(--color-accent); color:white; padding:12px 24px; border-radius:6px; border:none; font-size:16px; font-weight:600; font-family:inherit;">Large</button><div style="font-size: 11px; color: var(--color-text-secondary); margin-top: 8px; font-family:'JetBrains Mono',monospace;">size=lg · 16/12px/24px</div></div>
+      </div>
+    </div>
+
+    <!-- 4. States -->
+    <div style="border-top: var(--border-subtle); padding-top: 24px; margin-bottom: 32px;">
+      <div class="section-num" style="margin-bottom: 12px">04 · States (× every variant)</div>
+      <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; margin-bottom: 14px;">
+        <div class="state-card" style="padding: 14px 10px;"><div style="height:32px; display:flex; align-items:center; justify-content:center;"><button class="brand-btn-primary" style="font-size:13px; padding:6px 12px;">Default</button></div><div class="state-label" style="margin-top: 8px;">Default</div></div>
+        <div class="state-card" style="padding: 14px 10px;"><div style="height:32px; display:flex; align-items:center; justify-content:center;"><button style="background:var(--color-accent-pressed); color:white; padding:6px 12px; border-radius:4px; border:none; font-size:13px; font-weight:600; transform:scale(1.05);">Hover</button></div><div class="state-label" style="margin-top: 8px;">Hover</div></div>
+        <div class="state-card" style="padding: 14px 10px;"><div style="height:32px; display:flex; align-items:center; justify-content:center;"><button style="background:var(--color-accent-pressed); color:white; padding:6px 12px; border-radius:4px; border:none; font-size:13px; font-weight:600; transform:scale(0.9);">Active</button></div><div class="state-label" style="margin-top: 8px;">Active</div></div>
+        <div class="state-card" style="padding: 14px 10px;"><div style="height:32px; display:flex; align-items:center; justify-content:center;"><button style="background:var(--color-accent); color:white; padding:6px 12px; border-radius:4px; border:none; font-size:13px; font-weight:600; outline:2px solid var(--color-focus); outline-offset:2px;">Focus</button></div><div class="state-label" style="margin-top: 8px;">Focus</div></div>
+        <div class="state-card" style="padding: 14px 10px;"><div style="height:32px; display:flex; align-items:center; justify-content:center;"><button style="background:var(--color-accent); color:white; padding:6px 12px; border-radius:4px; border:none; font-size:13px; font-weight:600; opacity:0.7; display:inline-flex; align-items:center; gap:6px;"><span style="width:10px; height:10px; border:2px solid rgba(255,255,255,0.4); border-top-color:white; border-radius:50%; display:inline-block; animation: spin 0.8s linear infinite;"></span>Loading</button></div><div class="state-label" style="margin-top: 8px;">Loading</div></div>
+        <div class="state-card" style="padding: 14px 10px;"><div style="height:32px; display:flex; align-items:center; justify-content:center;"><button style="background:#a39e98; color:rgba(255,255,255,0.7); padding:6px 12px; border-radius:4px; border:none; font-size:13px; font-weight:600; cursor:not-allowed; opacity:0.55;">Disabled</button></div><div class="state-label" style="margin-top: 8px;">Disabled</div></div>
+      </div>
+    </div>
+
+    <!-- 5. Keyboard / A11y -->
+    <div style="border-top: var(--border-subtle); padding-top: 24px; margin-bottom: 32px;">
+      <div class="section-num" style="margin-bottom: 12px">05 · Keyboard &amp; Accessibility</div>
+      <div style="background: var(--color-bg-alt); border-radius: 12px; overflow: hidden;">
+        <div style="display: grid; grid-template-columns: 180px 1fr; font-size: 14px;">
+          <div style="padding: 12px 16px; border-bottom: var(--border-subtle); font-weight: 600;">Tab</div><div style="padding: 12px 16px; border-bottom: var(--border-subtle); color: var(--color-text-secondary);">Move focus to / from button</div>
+          <div style="padding: 12px 16px; border-bottom: var(--border-subtle); font-weight: 600;">Enter / Space</div><div style="padding: 12px 16px; border-bottom: var(--border-subtle); color: var(--color-text-secondary);">Activate button</div>
+          <div style="padding: 12px 16px; border-bottom: var(--border-subtle); font-weight: 600;">Role</div><div style="padding: 12px 16px; border-bottom: var(--border-subtle); color: var(--color-text-secondary); font-family:'JetBrains Mono',monospace;">role="button" (implicit if &lt;button&gt;)</div>
+          <div style="padding: 12px 16px; border-bottom: var(--border-subtle); font-weight: 600;">Loading a11y</div><div style="padding: 12px 16px; border-bottom: var(--border-subtle); color: var(--color-text-secondary); font-family:'JetBrains Mono',monospace;">aria-busy="true" · aria-live="polite"</div>
+          <div style="padding: 12px 16px; border-bottom: var(--border-subtle); font-weight: 600;">Disabled a11y</div><div style="padding: 12px 16px; border-bottom: var(--border-subtle); color: var(--color-text-secondary); font-family:'JetBrains Mono',monospace;">aria-disabled="true" (don't use HTML disabled for a11y announcement)</div>
+          <div style="padding: 12px 16px; font-weight: 600;">Icon-only a11y</div><div style="padding: 12px 16px; color: var(--color-text-secondary); font-family:'JetBrains Mono',monospace;">aria-label required</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 6. Do / Don't -->
+    <div style="border-top: var(--border-subtle); padding-top: 24px; margin-bottom: 32px;">
+      <div class="section-num" style="margin-bottom: 12px">06 · Do &amp; Don't</div>
+      <div class="rule-pair" style="margin-top: 0;">
+        <div class="rule-card">
+          <div class="rule-label">✓ Do</div>
+          <ul style="margin: 0; padding-left: 18px; font-size: 14px; color: var(--color-text-primary); line-height: 1.65;">
+            <li>One primary button per view</li>
+            <li>Action-oriented label ("Send package", not "OK")</li>
+            <li>Show loading state while async work runs</li>
+            <li>Use destructive variant for delete / discard</li>
+          </ul>
+        </div>
+        <div class="rule-card dont">
+          <div class="rule-label">✗ Don't</div>
+          <ul style="margin: 0; padding-left: 18px; font-size: 14px; color: var(--color-text-secondary); line-height: 1.65;">
+            <li>Don't stack two primary buttons side by side</li>
+            <li>Don't use ghost button for the main action on a page</li>
+            <li>Don't disable without an obvious reason ("Why is this gray?")</li>
+            <li>Don't rely on color alone for destructive (use word "Delete")</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- 7. API sketch -->
+    <div style="border-top: var(--border-subtle); padding-top: 24px;">
+      <div class="section-num" style="margin-bottom: 12px">07 · Props API</div>
+      <pre style="font-family:'JetBrains Mono',monospace; font-size: 13px; color: var(--color-text-primary); background: var(--color-bg-inverse); color: #ededed; border-radius: 12px; padding: 20px 24px; margin: 0; line-height: 1.7; overflow-x: auto;">interface ButtonProps {
+  variant?: 'primary' | 'secondary' | 'ghost' | 'destructive'  // default: primary
+  size?: 'sm' | 'md' | 'lg'                                    // default: md
+  leftIcon?: ReactNode
+  rightIcon?: ReactNode
+  loading?: boolean                                            // shows spinner, disables click
+  disabled?: boolean
+  fullWidth?: boolean
+  onClick?: () => void
+  children: ReactNode                                          // label
+}</pre>
+    </div>
+  </div>
+
+  <div style="margin-top: 32px; padding: 20px 24px; background: white; border: var(--border-subtle); border-radius: 12px; max-width: 900px;">
+    <h3 style="font-size: 14px; font-weight: 700; margin: 0 0 6px; color: var(--color-accent);">Use this template for every future component</h3>
+    <p style="font-size: 14px; color: var(--color-text-secondary); line-height: 1.55; margin: 0;">7 fixed sections: Anatomy · Variants · Sizes · States · Keyboard & A11y · Do / Don't · Props API. When a designer or engineer asks "how do I add Select?" — the answer is always "write this page." Consistency in the spec format creates consistency in the product.</p>
+  </div>
+
+  <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
+</section>
+
+</main>
+</div>
+
+<div class="board-toast" id="boardToast" role="status" aria-live="polite"></div>
+
+<script src="_shared/board.js" defer></script>
+
+</body>
+</html>
