@@ -1,0 +1,296 @@
+/* =========================================================
+   Design Board — Shared Chrome
+   =========================================================
+
+   This file holds the cross-brand "platform layer":
+     • A11y utilities (skip link, visually-hidden)
+     • Reduced-motion media query
+     • TOC scroll-spy active state
+     • Copy-to-clipboard button + toast
+     • Template-scope-note (marks brand-specific content inside
+       otherwise reusable section skeletons)
+     • Illustration placeholder cards
+     • Do/Don't rule pair
+     • Supplement-section marker styles
+
+   Every style here consumes CSS variables that each brand defines
+   in its own :root. Token contract (see also Token Naming section):
+     --color-text-primary       (near-black text)
+     --color-text-secondary     (muted body)
+     --color-text-muted         (disabled / caption — decorative only)
+     --color-bg-canvas          (page bg)
+     --color-bg-alt             (alternating section bg)
+     --color-bg-inverse         (dark surface bg)
+     --color-accent             (primary CTA / link)
+     --color-focus              (focus ring color)
+     --color-badge-bg / text    (pill badge surfaces)
+     --border-subtle            (1px whisper border)
+     --elevation-soft           (4-layer soft card shadow)
+     --elevation-deep           (5-layer deep hover shadow)
+
+   Optional tokens (fallback provided; brand can override):
+     --color-success-bg / -border / -text   (copy success feedback)
+     --color-illus-placeholder-bg / -border / -text  (gradient-bed variant)
+   ========================================================= */
+
+:root {
+  /* Platform defaults — override per-brand in the brand's own :root. */
+  --color-success-bg: #d1fadf;
+  --color-success-border: #9ddbab;
+  --color-success-text: #027a48;
+
+  --color-illus-placeholder-bg: rgba(255,255,255,0.85);
+  --color-illus-placeholder-border: rgba(0,0,0,0.18);
+  --color-illus-placeholder-text: rgba(0,0,0,0.55);
+  --color-illus-placeholder-strong: rgba(0,0,0,0.78);
+}
+
+/* ==== A11y utilities ==== */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  white-space: nowrap;
+  border: 0;
+}
+.skip-link {
+  position: absolute;
+  top: -80px;
+  left: 16px;
+  z-index: 9999;
+  background: var(--color-text-primary);
+  color: white;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: top 0.15s ease;
+}
+.skip-link:focus {
+  top: 16px;
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+/* Respect reduced-motion preference across all transitions and smooth scroll */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ==== TOC scroll-spy active state ==== */
+.toc a.active {
+  background: var(--color-bg-canvas);
+  color: var(--color-text-primary);
+  box-shadow:
+    rgba(0,0,0,0.04) 0px 2px 8px,
+    rgba(0,0,0,0.02) 0px 1px 2px;
+}
+.toc a.active .num {
+  color: var(--color-accent);
+  font-weight: 600;
+}
+
+/* ==== Supplement section marker (sections added beyond the spec) ==== */
+.section-num.supplement { color: var(--color-accent); }
+.section-num.supplement .supplement-origin {
+  color: var(--color-text-muted);
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  margin-left: 6px;
+}
+
+/* ==== Color card: click-to-copy affordance ==== */
+.color-card {
+  cursor: pointer;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+  outline: none;
+}
+.color-card:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    rgba(0,0,0,0.05) 0px 6px 20px,
+    rgba(0,0,0,0.03) 0px 2px 6px;
+}
+.color-card:hover .color-hex { color: var(--color-text-primary); }
+.color-card:focus-visible {
+  box-shadow: 0 0 0 2px var(--color-focus);
+}
+
+/* ==== Universal copy button ==== */
+.copy-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  background: rgba(128,128,128,0.12);
+  color: inherit;
+  border: 1px solid rgba(128,128,128,0.22);
+  padding: 4px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.18s ease, background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+}
+.copy-btn svg { flex-shrink: 0; }
+.copy-btn:hover {
+  background: rgba(128,128,128,0.28);
+  border-color: rgba(128,128,128,0.4);
+}
+/* Success feedback uses semantic green (not brand accent) so copying feels
+   like completion, not promotion. Brand accent is reserved for CTAs.
+   Each brand can override the --color-success-* tokens in its own :root. */
+.copy-btn.copied {
+  background: var(--color-success-bg) !important;
+  border-color: var(--color-success-border) !important;
+  color: var(--color-success-text) !important;
+  opacity: 1 !important;
+}
+.prompt-card:hover .copy-btn,
+.prompt-card:focus-within .copy-btn,
+pre:hover .copy-btn,
+pre:focus-within .copy-btn,
+.color-card:hover .copy-btn,
+.color-card:focus-within .copy-btn { opacity: 1; }
+/* Keyboard-focused copy button is always visible with a clear focus ring. */
+.copy-btn:focus-visible {
+  opacity: 1;
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+@media (max-width: 900px) {
+  .copy-btn { opacity: 1; }
+}
+
+/* ==== Toast ==== */
+.board-toast {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%) translateY(12px);
+  background: var(--color-bg-inverse);
+  color: white;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  padding: 10px 18px;
+  border-radius: 9999px;
+  box-shadow: var(--elevation-deep);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  z-index: 1000;
+}
+.board-toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ==== Template scope note ==== */
+.template-scope-note {
+  margin-top: 20px;
+  max-width: 880px;
+  padding: 12px 18px;
+  background: var(--color-bg-alt);
+  border: var(--border-subtle);
+  border-left: 3px solid var(--color-text-muted);
+  border-radius: 6px;
+  font-size: 12.5px;
+  color: var(--color-text-secondary);
+  line-height: 1.55;
+  display: flex;
+  gap: 12px;
+}
+.template-scope-note-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  padding-top: 1px;
+}
+.template-scope-note strong { color: var(--color-text-primary); font-weight: 600; }
+
+/* ==== Illustration placeholder ==== */
+.illus-placeholder {
+  padding: 14px 20px;
+  background: rgba(255,255,255,0.85);
+  border: 1px dashed var(--color-text-muted);
+  border-radius: 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  text-align: center;
+  line-height: 1.5;
+  letter-spacing: 0.02em;
+}
+.illus-placeholder strong {
+  color: var(--color-text-primary);
+  font-weight: 600;
+  display: block;
+  margin-bottom: 2px;
+}
+/* Gradient-bg variant — adapts placeholder to sit on colored hero beds.
+   Each brand overrides --color-illus-placeholder-* to match its gradient bed
+   (e.g. Notion → warm browns; Linear → cool purples). Platform default is
+   neutral dark on translucent white. */
+.illus-placeholder.on-gradient {
+  background: var(--color-illus-placeholder-bg);
+  border-color: var(--color-illus-placeholder-border);
+  color: var(--color-illus-placeholder-text);
+}
+.illus-placeholder.on-gradient strong { color: var(--color-illus-placeholder-strong); }
+
+/* ==== Do / Don't rule pair (whisper-border variant) ==== */
+.rule-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  max-width: 900px;
+  margin-top: 32px;
+}
+.rule-card {
+  background: var(--color-bg-canvas);
+  border: var(--border-subtle);
+  border-left: 3px solid var(--color-accent);
+  border-radius: 8px;
+  padding: 16px 20px;
+}
+.rule-card.dont {
+  background: var(--color-bg-alt);
+  border-left-color: var(--color-text-muted);
+}
+.rule-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-text-secondary);
+  margin-bottom: 4px;
+}
+.rule-body {
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--color-text-primary);
+}
+.rule-card.dont .rule-body { color: var(--color-text-secondary); }
